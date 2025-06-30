@@ -3,7 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tyler's Favorite Photos</title>
+    <title>Tyler's Photo Gallery</title>
+    <!-- Favicon Link - UPDATED to images/icon/icon.png -->
+    <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/twilliams986/twilliams986.github.io/main/images/icon/icon.png"> 
+    
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Google Fonts - Montserrat -->
@@ -40,7 +43,7 @@
         /* Styles for the masonry grid */
         #photo-grid {
             column-count: 4; /* Default for larger screens */
-            column-gap: 0.5rem; /* Reduced gap to Tailwind gap-2 equivalent */
+            column-gap: 0.125rem; /* VERY reduced gap for nearly seamless look */
             width: 100%; /* Ensure it takes full width of its parent */
         }
 
@@ -64,12 +67,10 @@
         /* Photo card specific styles for masonry */
         #photo-grid > div {
             break-inside: avoid; /* Prevent card from breaking across columns */
-            margin-bottom: 0.5rem; /* Reduced vertical spacing between cards */
+            margin-bottom: 0.125rem; /* VERY reduced vertical spacing */
             width: 100%; /* Ensure each card takes full column width */
-            /* Removed bg-white from here to let background show through */
-            border-radius: 0.375rem; /* Tailwind rounded-md */
-            box-shadow: none; /* Tailwind shadow-none */
-            overflow: hidden; /* Keep overflow hidden for hover effect */
+            
+            overflow: hidden; /* Keep overflow hidden to contain child image */
             position: relative; /* Keep relative for title overlay */
             
             /* Initial state for loading animation */
@@ -90,8 +91,12 @@
             transition: transform 0.3s ease-in-out;
             width: 100%;
             height: auto; /* Maintain aspect ratio */
-            object-fit: contain; /* Ensure entire image is visible */
+            object-fit: cover; /* CHANGED to cover to eliminate white strips */
             display: block; /* Important for margin auto on variants */
+            
+            /* Applied border-radius and box-shadow directly to the image */
+            border-radius: 0.375rem; /* Tailwind rounded-md */
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06); /* Tailwind shadow-sm */
         }
 
         /* Classes for randomly varied image sizes */
@@ -149,19 +154,10 @@
             visibility: visible;
         }
 
-        #modal-content {
-            position: relative;
-            max-width: 90%;
-            max-height: 90%;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-
         #modal-image {
-            max-width: 100%;
-            max-height: 100%;
-            object-fit: contain; /* Ensure entire image fits within modal */
+            max-width: 90vw; /* Image max width relative to viewport width */
+            max-height: 90vh; /* Image max height relative to viewport height */
+            object-fit: contain; /* Ensure entire image fits within modal, maintaining aspect ratio */
             border-radius: 8px;
             box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
         }
@@ -187,36 +183,28 @@
 </head>
 <body class="antialiased text-gray-800">
     <div class="min-h-screen flex flex-col items-center py-4 px-4 sm:px-6 lg:px-8 w-full">
-        <!-- Header Section -->
         <header class="w-full max-w-4xl mx-auto mb-8 text-center header-bg">
             <h1 class="text-5xl font-extrabold text-gray-900 mb-4 rounded-md p-4 bg-white shadow-sm">
-                Tyler's Favorite Photos
+                Tyler's Photo Gallery
             </h1>
-            <p class="text-xl text-gray-600">A collection of moments I cherish.</p>
+            <p class="text-xl text-gray-600">Every picture tells a story.</p>
         </header>
 
-        <!-- Loading Message -->
         <div id="loading-message">Loading photos...</div>
 
-        <!-- Photo Gallery Grid -->
         <main class="w-full max-w-6xl mx-auto main-bg">
             <div id="photo-grid">
-                <!-- Photo cards will be dynamically inserted here by JavaScript -->
-            </div>
+                </div>
         </main>
 
-        <!-- Footer Section -->
         <footer class="w-full max-w-4xl mx-auto mt-12 text-center text-gray-500 text-sm footer-bg">
             <p>&copy; 2025 Tyler's Photo Gallery. All rights reserved.</p>
         </footer>
     </div>
 
-    <!-- Image Modal Structure -->
     <div id="image-modal-overlay">
-        <div id="modal-content">
-            <img id="modal-image" src="" alt="Full size photo">
-            <button id="modal-close-btn">&times;</button>
-        </div>
+        <img id="modal-image" src="" alt="Full size photo">
+        <button id="modal-close-btn">&times;</button>
     </div>
 
     <script>
@@ -312,16 +300,15 @@
                         // Randomly apply a size variant to images
                         const randomVal = Math.random();
                         let sizeVariantClass = '';
-                        if (randomVal < 0.25) { // 25% chance for small variant
+                        if (randomVal < 0.33) { // ~33% chance for small variant
                             sizeVariantClass = 'image-variant-small';
-                        } else if (randomVal < 0.5) { // 25% chance for medium variant (total 50% for smaller variants)
+                        } else if (randomVal < 0.66) { // ~33% chance for medium variant
                             sizeVariantClass = 'image-variant-medium';
                         }
-                        // Otherwise, it remains default (100% width)
+                        // Otherwise, it remains default (100% width) - ~33% chance
 
                         const photoCardDiv = document.createElement('div');
-                        // Removed 'bg-white' from here
-                        photoCardDiv.className = `rounded-md shadow-none overflow-hidden group relative`;
+                        photoCardDiv.className = `overflow-hidden group relative`;
                         photoCardDiv.innerHTML = `
                             <img src="${url}" alt="${title}" class="gallery-image ${sizeVariantClass}">
                         `;
