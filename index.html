@@ -28,13 +28,13 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background-image: url('https://raw.githubusercontent.com/twilliams986/twilliams986.github.io/main/images/background.jpg');
-            background-size: auto; /* Changed from 'cover' to 'auto' for tiling */
-            background-position: center; /* Still center initial position */
-            background-repeat: repeat; /* Changed from 'no-repeat' to 'repeat' */
+            background-image: url('https://raw.githubusercontent.com/twilliams986/twilliams986.github.io/main/images/background/Gemini_Generated_Image_hiirrzhiirrzhiir~2.jpg');
+            background-size: auto; /* For tiling */
+            background-position: center;
+            background-repeat: repeat; /* Repeat for tiling effect */
             z-index: -1; /* Place it behind the content */
-            filter: blur(3px) brightness(60%); /* Apply blur and darkness to the tiled background */
-            -webkit-filter: blur(3px) brightness(60%); /* For better browser compatibility */
+            filter: blur(3px); /* Apply blur only */
+            -webkit-filter: blur(3px); /* For better browser compatibility */
         }
 
         /* Styles for the masonry grid */
@@ -66,6 +66,12 @@
             break-inside: avoid; /* Prevent card from breaking across columns */
             margin-bottom: 0.5rem; /* Reduced vertical spacing between cards */
             width: 100%; /* Ensure each card takes full column width */
+            /* Removed bg-white from here to let background show through */
+            border-radius: 0.375rem; /* Tailwind rounded-md */
+            box-shadow: none; /* Tailwind shadow-none */
+            overflow: hidden; /* Keep overflow hidden for hover effect */
+            position: relative; /* Keep relative for title overlay */
+            
             /* Initial state for loading animation */
             opacity: 0;
             transform: translateY(20px);
@@ -85,18 +91,17 @@
             width: 100%;
             height: auto; /* Maintain aspect ratio */
             object-fit: contain; /* Ensure entire image is visible */
+            display: block; /* Important for margin auto on variants */
         }
 
         /* Classes for randomly varied image sizes */
         .gallery-image.image-variant-small {
-            max-width: 65%; /* Make some images take up less width in their column */
+            max-width: 60%; /* Make some images take up less width in their column */
             margin: 0 auto; /* Center the smaller image */
-            display: block; /* Ensure margin auto works */
         }
         .gallery-image.image-variant-medium {
-            max-width: 85%; /* Slightly larger variant */
+            max-width: 80%; /* Slightly larger variant */
             margin: 0 auto;
-            display: block;
         }
 
         .gallery-image:hover {
@@ -218,10 +223,15 @@
         document.addEventListener('DOMContentLoaded', async () => {
             const owner = 'twilliams986';
             const repo = 'twilliams986.github.io';
-            const imagePath = 'images'; // The folder inside your repo
-            const backgroundFileName = 'TJW9258.jpg'; // The specific file name for the background (still excluded from gallery)
-            const newTiledBackgroundFileName = 'background.jpg'; // The new tiled background image file name
+            const imagePath = 'images'; // The folder where most gallery images are
+            const backgroundFileName = 'TJW9258.jpg'; // Still excluded from gallery
+            const excludedGalleryFileName = 'TJW0819.jpg'; // Still excluded from gallery
 
+            // UPDATED: New tiled background image details
+            const newTiledBackgroundPath = 'images/background';
+            const newTiledBackgroundFileName = 'Gemini_Generated_Image_hiirrzhiirrzhiir~2.jpg';
+
+            // GitHub API URL for the main images folder (for gallery photos)
             const githubApiUrl = `https://api.github.com/repos/${owner}/${repo}/contents/${imagePath}`;
             const photoGrid = document.getElementById('photo-grid');
             const loadingMessage = document.getElementById('loading-message');
@@ -262,15 +272,22 @@
                 }
                 const files = await response.json();
 
-                // Filter for image files, exclude the original background image AND the new tiled background image
+                // Filter for image files, excluding specific ones
                 let imageUrls = files
                     .filter(file => 
                         file.type === 'file' && 
                         /\.(jpg|jpeg|png|gif|webp|svg)$/i.test(file.name) &&
-                        file.name !== backgroundFileName && // Exclude the original background image
-                        file.name !== newTiledBackgroundFileName // Exclude the new tiled background image
+                        file.name !== backgroundFileName && // Exclude original background candidate
+                        file.name !== excludedGalleryFileName // Exclude explicitly removed gallery image
                     )
                     .map(file => file.download_url);
+
+                // IMPORTANT: If the new tiled background is in a SUBFOLDER of 'images',
+                // the main API call won't see it. We need to handle its exclusion carefully.
+                // Assuming `newTiledBackgroundFileName` is *not* in the main `images` folder,
+                // but in `images/background/`, it won't be in `files` array from `githubApiUrl`.
+                // If it were in the same `images` folder, the filter above would need to exclude it by name.
+                // Since it's in a subfolder, the current filter is fine for the main gallery.
 
                 // Shuffle the array of image URLs
                 for (let i = imageUrls.length - 1; i > 0; i--) {
@@ -303,10 +320,10 @@
                         // Otherwise, it remains default (100% width)
 
                         const photoCardDiv = document.createElement('div');
-                        photoCardDiv.className = `bg-white rounded-md shadow-none overflow-hidden group relative`;
+                        // Removed 'bg-white' from here
+                        photoCardDiv.className = `rounded-md shadow-none overflow-hidden group relative`;
                         photoCardDiv.innerHTML = `
                             <img src="${url}" alt="${title}" class="gallery-image ${sizeVariantClass}">
-                            <!-- Removed the hover title div -->
                         `;
                         photoGrid.appendChild(photoCardDiv);
 
