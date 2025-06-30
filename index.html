@@ -3,115 +3,161 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Favorite Photos</title>
+    <title>Tyler's Favorite Photos</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Google Fonts - Inter -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <!-- Google Fonts - Montserrat -->
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
         body {
-            font-family: 'Inter', sans-serif;
-            background-color: #f0f2f5; /* Light gray background */
+            font-family: 'Montserrat', sans-serif;
+            background-color: #EDE9E0; /* Fallback color in case image fails to load */
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative; /* Needed for pseudo-element positioning */
+            overflow-x: hidden; /* Prevent horizontal scroll due to potential filter edge effects */
         }
+
+        /* Pseudo-element for the background image and filters */
+        body::before {
+            content: '';
+            position: fixed; /* Fixed so it covers the viewport and doesn't scroll */
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url('https://raw.githubusercontent.com/twilliams986/twilliams986.github.io/main/images/TJW9258.jpg');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            z-index: -1; /* Place it behind the content */
+            filter: blur(3px) brightness(60%); /* Increased blur slightly, darkened more */
+            -webkit-filter: blur(3px) brightness(60%); /* For better browser compatibility */
+        }
+
         .gallery-image {
             transition: transform 0.3s ease-in-out;
         }
         .gallery-image:hover {
             transform: scale(1.05);
         }
+        /* Style for the loading message */
+        #loading-message {
+            text-align: center;
+            padding: 20px;
+            font-size: 1.2em;
+            color: #4a5568; /* Tailwind gray-700 */
+            background-color: rgba(255, 255, 255, 0.8); /* Semi-transparent white background for readability */
+            border-radius: 8px;
+            margin-top: 20px;
+            z-index: 1; /* Ensure it's above the background */
+        }
+        /* Ensure content blocks have a background for readability over the image */
+        .header-bg, .main-bg, .footer-bg {
+            /* Reduced opacity from 0.9 to 0.85 for more background visibility */
+            background-color: rgba(255, 255, 255, 0.85); 
+            border-radius: 8px;
+            padding: 1rem;
+            z-index: 1; /* Ensure content is above the background */
+            position: relative; /* Needed for z-index to work correctly */
+        }
     </style>
 </head>
 <body class="antialiased text-gray-800">
-    <div class="min-h-screen flex flex-col items-center py-8 px-4 sm:px-6 lg:px-8">
+    <div class="min-h-screen flex flex-col items-center py-4 px-4 sm:px-6 lg:px-8 w-full">
         <!-- Header Section -->
-        <header class="w-full max-w-4xl mx-auto mb-12 text-center">
-            <h1 class="text-5xl font-extrabold text-gray-900 mb-4 rounded-lg p-4 bg-white shadow-lg">
-                My Favorite Photos
+        <header class="w-full max-w-4xl mx-auto mb-8 text-center header-bg">
+            <h1 class="text-5xl font-extrabold text-gray-900 mb-4 rounded-md p-4 bg-white shadow-sm">
+                Tyler's Favorite Photos
             </h1>
             <p class="text-xl text-gray-600">A collection of moments I cherish.</p>
         </header>
 
+        <!-- Loading Message -->
+        <div id="loading-message">Loading photos...</div>
+
         <!-- Photo Gallery Grid -->
-        <main class="w-full max-w-6xl mx-auto">
-            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                <!-- Photo Card 1 -->
-                <div class="bg-white rounded-xl shadow-lg overflow-hidden group">
-                    <img src="https://placehold.co/600x400/A78BFA/ffffff?text=Landscape+View" alt="Beautiful Landscape" class="w-full h-48 object-cover gallery-image">
-                    <div class="p-4">
-                        <h2 class="text-xl font-semibold text-gray-900 mb-2">Majestic Mountains</h2>
-                        <p class="text-gray-600 text-sm">A breathtaking view of the serene mountains during sunrise.</p>
-                    </div>
-                </div>
-
-                <!-- Photo Card 2 -->
-                <div class="bg-white rounded-xl shadow-lg overflow-hidden group">
-                    <img src="https://placehold.co/600x400/60A5FA/ffffff?text=Cityscape+Night" alt="City at Night" class="w-full h-48 object-cover gallery-image">
-                    <div class="p-4">
-                        <h2 class="text-xl font-semibold text-gray-900 mb-2">Vibrant City Lights</h2>
-                        <p class="text-gray-600 text-sm">The bustling cityscape illuminated by countless lights at night.</p>
-                    </div>
-                </div>
-
-                <!-- Photo Card 3 -->
-                <div class="bg-white rounded-xl shadow-lg overflow-hidden group">
-                    <img src="https://placehold.co/600x400/34D399/ffffff?text=Beach+Sunset" alt="Beach Sunset" class="w-full h-48 object-cover gallery-image">
-                    <div class="p-4">
-                        <h2 class="text-xl font-semibold text-gray-900 mb-2">Golden Sunset Beach</h2>
-                        <p class="text-gray-600 text-sm">A tranquil beach scene with the sun setting over the horizon.</p>
-                    </div>
-                </div>
-
-                <!-- Photo Card 4 -->
-                <div class="bg-white rounded-xl shadow-lg overflow-hidden group">
-                    <img src="https://placehold.co/600x400/FCD34D/ffffff?text=Forest+Path" alt="Forest Path" class="w-full h-48 object-cover gallery-image">
-                    <div class="p-4">
-                        <h2 class="text-xl font-semibold text-gray-900 mb-2">Enchanted Forest Path</h2>
-                        <p class="text-gray-600 text-sm">A peaceful path winding through a dense, green forest.</p>
-                    </div>
-                </div>
-
-                <!-- Photo Card 5 -->
-                <div class="bg-white rounded-xl shadow-lg overflow-hidden group">
-                    <img src="https://placehold.co/600x400/EC4899/ffffff?text=Flower+Close-up" alt="Flower Close-up" class="w-full h-48 object-cover gallery-image">
-                    <div class="p-4">
-                        <h2 class="text-xl font-semibold text-gray-900 mb-2">Delicate Blossom</h2>
-                        <p class="text-gray-600 text-sm">A close-up of a vibrant flower, showcasing its intricate details.</p>
-                    </div>
-                </div>
-
-                <!-- Photo Card 6 -->
-                <div class="bg-white rounded-xl shadow-lg overflow-hidden group">
-                    <img src="https://placehold.co/600x400/8B5CF6/ffffff?text=Abstract+Art" alt="Abstract Art" class="w-full h-48 object-cover gallery-image">
-                    <div class="p-4">
-                        <h2 class="text-xl font-semibold text-gray-900 mb-2">Abstract Expression</h2>
-                        <p class="text-gray-600 text-sm">A captivating piece of abstract art with dynamic colors.</p>
-                    </div>
-                </div>
-
-                <!-- Photo Card 7 -->
-                <div class="bg-white rounded-xl shadow-lg overflow-hidden group">
-                    <img src="https://placehold.co/600x400/EF4444/ffffff?text=Food+Photography" alt="Food Photography" class="w-full h-48 object-cover gallery-image">
-                    <div class="p-4">
-                        <h2 class="text-xl font-semibold text-gray-900 mb-2">Gourmet Delight</h2>
-                        <p class="text-gray-600 text-sm">A beautifully plated dish, ready to be savored.</p>
-                    </div>
-                </div>
-
-                <!-- Photo Card 8 -->
-                <div class="bg-white rounded-xl shadow-lg overflow-hidden group">
-                    <img src="https://placehold.co/600x400/22C55E/ffffff?text=Wildlife+Shot" alt="Wildlife Shot" class="w-full h-48 object-cover gallery-image">
-                    <div class="p-4">
-                        <h2 class="text-xl font-semibold text-gray-900 mb-2">Wilderness Encounter</h2>
-                        <p class="text-gray-600 text-sm">A stunning shot of wildlife in its natural habitat.</p>
-                    </div>
-                </div>
+        <main class="w-full max-w-6xl mx-auto main-bg">
+            <div id="photo-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                <!-- Photo cards will be dynamically inserted here by JavaScript -->
             </div>
         </main>
 
         <!-- Footer Section -->
-        <footer class="w-full max-w-4xl mx-auto mt-12 text-center text-gray-500 text-sm">
-            <p>&copy; 2025 My Photo Gallery. All rights reserved.</p>
+        <footer class="w-full max-w-4xl mx-auto mt-12 text-center text-gray-500 text-sm footer-bg">
+            <p>&copy; 2025 Tyler's Photo Gallery. All rights reserved.</p>
         </footer>
     </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            const owner = 'twilliams986';
+            const repo = 'twilliams986.github.io';
+            const imagePath = 'images'; // The folder inside your repo
+            const backgroundFileName = 'TJW9258.jpg'; // The specific file name for the background
+            const githubApiUrl = `https://api.github.com/repos/${owner}/${repo}/contents/${imagePath}`;
+            const photoGrid = document.getElementById('photo-grid');
+            const loadingMessage = document.getElementById('loading-message');
+
+            try {
+                // Fetch the contents of the images directory from GitHub API
+                const response = await fetch(githubApiUrl);
+                if (!response.ok) {
+                    throw new Error(`GitHub API error: ${response.statusText}`);
+                }
+                const files = await response.json();
+
+                // Filter for image files, exclude the background image, and get their raw download URLs
+                let imageUrls = files
+                    .filter(file => 
+                        file.type === 'file' && 
+                        /\.(jpg|jpeg|png|gif|webp|svg)$/i.test(file.name) &&
+                        file.name !== backgroundFileName // Exclude the background image
+                    )
+                    .map(file => file.download_url);
+
+                // Shuffle the array of image URLs
+                for (let i = imageUrls.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [imageUrls[i], imageUrls[j]] = [imageUrls[j], imageUrls[i]]; // ES6 swap
+                }
+
+                // Clear loading message
+                loadingMessage.style.display = 'none';
+
+                // Dynamically create and append photo cards
+                if (imageUrls.length > 0) {
+                    imageUrls.forEach(url => {
+                        // Extract a title from the filename (e.g., "my-photo.jpg" -> "My Photo")
+                        const fileName = url.substring(url.lastIndexOf('/') + 1);
+                        const title = fileName.replace(/\.(jpg|jpeg|png|gif|webp|svg)$/i, '')
+                                                .replace(/[-_]/g, ' ')
+                                                .split(' ')
+                                                .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+                                                .join(' ');
+
+                        const photoCardHtml = `
+                            <div class="bg-white rounded-md shadow-none overflow-hidden group relative">
+                                <img src="${url}" alt="${title}" class="w-full h-64 object-cover gallery-image">
+                                <div class="absolute inset-x-0 bottom-0 p-4 bg-black bg-opacity-50 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                                    <h2 class="text-xl font-semibold">${title}</h2>
+                                </div>
+                            </div>
+                        `;
+                        photoGrid.insertAdjacentHTML('beforeend', photoCardHtml);
+                    });
+                } else {
+                    photoGrid.innerHTML = '<p class="text-center text-gray-600 col-span-full">No images found in the specified GitHub repository path (excluding the background image).</p>';
+                }
+
+            } catch (error) {
+                console.error("Error fetching images:", error);
+                loadingMessage.textContent = 'Failed to load photos. Please check the repository path and your internet connection.';
+                loadingMessage.style.color = '#ef4444'; // Tailwind red-500
+            }
+        });
+    </script>
 </body>
 </html>
