@@ -3,337 +3,262 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tyler's Photo Gallery</title>
-    <!-- Favicon Link - UPDATED to images/icon/icon.png -->
-    <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/twilliams986/twilliams986.github.io/main/images/icon/icon.png"> 
+    <title>Tyler Williams — Portfolio</title>
     
-    <!-- Tailwind CSS CDN -->
+    <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/twilliams986/twilliams986.github.io/main/images/icon/icon.png"> 
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Google Fonts - Montserrat -->
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&family=Playfair+Display:ital,wght@0,400;1,400&display=swap" rel="stylesheet">
+    
     <style>
+        :root {
+            --bg: #ffffff;
+            --fg: #000000;
+            --font-serif: 'Playfair Display', serif;
+            --font-sans: 'Inter', sans-serif;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
         body {
-            font-family: 'Montserrat', sans-serif;
-            background-color: #EDE9E0; /* Fallback color in case image fails to load */
-            min-height: 100vh;
+            background-color: var(--bg);
+            color: var(--fg);
+            font-family: var(--font-sans);
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* Navigation */
+        nav {
+            position: fixed;
+            top: 40px;
+            right: 40px;
+            text-align: right;
+            z-index: 100;
             display: flex;
             flex-direction: column;
-            align-items: center;
-            position: relative; /* Needed for pseudo-element positioning */
-            overflow-x: hidden; /* Prevent horizontal scroll due to potential filter edge effects */
+            gap: 8px;
         }
-
-        /* Pseudo-element for the background image and filters */
-        body::before {
-            content: '';
-            position: fixed; /* Fixed so it covers the viewport and doesn't scroll */
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-image: url('https://raw.githubusercontent.com/twilliams986/twilliams986.github.io/main/images/background/Gemini_Generated_Image_hiirrzhiirrzhiir~2.jpg');
-            background-size: auto; /* For tiling */
-            background-position: center;
-            background-repeat: repeat; /* Repeat for tiling effect */
-            z-index: -1; /* Place it behind the content */
-            filter: blur(3px); /* Apply blur only */
-            -webkit-filter: blur(3px); /* For better browser compatibility */
-        }
-
-        /* Styles for the masonry grid */
-        #photo-grid {
-            column-count: 4; /* Default for larger screens */
-            column-gap: 0.125rem; /* VERY reduced gap for nearly seamless look */
-            width: 100%; /* Ensure it takes full width of its parent */
-        }
-
-        /* Responsive column counts */
-        @media (max-width: 639px) { /* Extra small screens */
-            #photo-grid {
-                column-count: 1;
-            }
-        }
-        @media (min-width: 640px) and (max-width: 767px) { /* Small screens (sm) */
-            #photo-grid {
-                column-count: 2;
-            }
-        }
-        @media (min-width: 768px) and (max-width: 1023px) { /* Medium screens (md) */
-            #photo-grid {
-                column-count: 3;
-            }
-        }
-
-        /* Photo card specific styles for masonry */
-        #photo-grid > div {
-            break-inside: avoid; /* Prevent card from breaking across columns */
-            margin-bottom: 0.125rem; /* VERY reduced vertical spacing */
-            width: 100%; /* Ensure each card takes full column width */
-            
-            overflow: hidden; /* Keep overflow hidden to contain child image */
-            position: relative; /* Keep relative for title overlay */
-            
-            /* Initial state for loading animation */
-            opacity: 0;
-            transform: translateY(20px);
-            /* Transition properties for smooth animation */
-            transition: opacity 0.6s ease-out, transform 0.6s ease-out;
-            cursor: pointer; /* Indicate that cards are clickable */
-        }
-
-        /* State after animation, when loaded */
-        #photo-grid > div.loaded {
-            opacity: 1;
-            transform: translateY(0);
-        }
-
-        .gallery-image {
-            transition: transform 0.3s ease-in-out;
-            width: 100%;
-            height: auto; /* Maintain aspect ratio */
-            object-fit: cover; /* CHANGED to cover to eliminate white strips */
-            display: block; /* Important for margin auto on variants */
-            
-            /* Applied border-radius and box-shadow directly to the image */
-            border-radius: 0.375rem; /* Tailwind rounded-md */
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06); /* Tailwind shadow-sm */
-        }
-
-        /* Classes for randomly varied image sizes */
-        .gallery-image.image-variant-small {
-            max-width: 60%; /* Make some images take up less width in their column */
-            margin: 0 auto; /* Center the smaller image */
-        }
-        .gallery-image.image-variant-medium {
-            max-width: 80%; /* Slightly larger variant */
-            margin: 0 auto;
-        }
-
-        .gallery-image:hover {
-            transform: scale(1.05);
-        }
-        /* Style for the loading message */
-        #loading-message {
-            text-align: center;
-            padding: 20px;
-            font-size: 1.2em;
-            color: #4a5568; /* Tailwind gray-700 */
-            background-color: rgba(255, 255, 255, 0.8); /* Semi-transparent white background for readability */
-            border-radius: 8px;
-            margin-top: 20px;
-            z-index: 1; /* Ensure it's above the background */
-        }
-        /* Ensure content blocks have a background for readability over the image */
-        .header-bg, .main-bg, .footer-bg {
-            background-color: rgba(255, 255, 255, 0.85); /* Slightly transparent white for content blocks */
-            border-radius: 8px;
-            padding: 1rem;
-            z-index: 1; /* Ensure content is above the background */
-            position: relative; /* Needed for z-index to work correctly */
-        }
-
-        /* Modal styles */
-        #image-modal-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.9); /* Dark semi-transparent background */
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000; /* High z-index to be on top */
-            opacity: 0;
-            visibility: hidden;
-            transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out;
-        }
-
-        #image-modal-overlay.open {
-            opacity: 1;
-            visibility: visible;
-        }
-
-        #modal-image {
-            max-width: 90vw; /* Image max width relative to viewport width */
-            max-height: 90vh; /* Image max height relative to viewport height */
-            object-fit: contain; /* Ensure entire image fits within modal, maintaining aspect ratio */
-            border-radius: 8px;
-            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
-        }
-
-        #modal-close-btn {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            background: none;
-            border: none;
-            font-size: 2.5rem;
-            color: white;
+        nav a {
+            text-decoration: none;
+            color: var(--fg);
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
             cursor: pointer;
-            z-index: 1001;
-            text-shadow: 0 0 5px rgba(0,0,0,0.7);
-            transition: color 0.2s ease-in-out;
+            transition: opacity 0.3s;
+        }
+        nav a:hover { opacity: 0.5; }
+        nav a.active { font-weight: 600; text-decoration: underline; text-underline-offset: 4px; }
+
+        .page { display: none; min-height: 100vh; padding-bottom: 10vh; }
+        .page.active { display: block; }
+
+        header { padding: 10vh 6vw 4vh; }
+        header h1 {
+            font-family: var(--font-serif);
+            font-size: clamp(3rem, 12vw, 8.5rem);
+            font-weight: 400;
+            line-height: 0.85;
+            letter-spacing: -0.02em;
         }
 
-        #modal-close-btn:hover {
-            color: #ccc;
+        /* Dynamic Grid */
+        #content {
+            padding: 0 6vw 5vh;
+            column-count: 2;
+            column-gap: 40px;
+            opacity: 0;
+            transition: opacity 1s ease;
+        }
+        #content.ready { opacity: 1; }
+
+        .loader {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.2em;
+            color: #888;
+        }
+
+        .item { break-inside: avoid; margin-bottom: 40px; display: block; }
+        .media-wrap {
+            cursor: zoom-in;
+            overflow: hidden;
+            background: #f7f7f7;
+            position: relative;
+            transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .media-wrap img {
+            width: 100%;
+            height: auto;
+            display: block;
+            transition: opacity 0.4s ease, transform 0.6s ease;
+            opacity: 0; /* Hidden until loaded */
+        }
+        .media-wrap img.loaded { opacity: 1; }
+        .media-wrap:hover img { transform: scale(1.02); opacity: 0.8; }
+
+        /* Sections */
+        .info-container, .contact-container { padding: 20vh 10vw 5vh; max-width: 1200px; }
+        .byline { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.3em; color: #888; margin-bottom: 0.5rem; display: block; }
+        .info-text { font-family: var(--font-serif); font-size: clamp(1.5rem, 4vw, 3rem); line-height: 1.2; margin-bottom: 6rem; }
+        
+        .details-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4rem; margin-top: 4rem; }
+        .detail-block h3 { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.2em; margin-bottom: 1rem; border-bottom: 1px solid #eee; padding-bottom: 0.5rem; }
+        .detail-block p { font-size: 1rem; line-height: 1.6; color: #333; }
+
+        /* Form */
+        .contact-form { max-width: 600px; width: 100%; margin-top: 2rem; }
+        .form-group { margin-bottom: 2rem; }
+        .form-group label { display: block; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.5rem; color: #888; }
+        .form-group input, .form-group textarea {
+            width: 100%; border: none; border-bottom: 1px solid #000; padding: 0.5rem 0; font-family: var(--font-sans); font-size: 1rem; outline: none; background: transparent;
+        }
+        .submit-btn { background: #000; color: #fff; border: none; padding: 1rem 2rem; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.2em; cursor: pointer; }
+
+        footer { padding: 5vh 6vw 10vh; text-align: center; }
+        .back-to-top { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.25em; color: #aaa; text-decoration: none; cursor: pointer; }
+
+        /* Modal */
+        #modal { position: fixed; inset: 0; background: white; z-index: 1000; display: none; justify-content: center; align-items: center; padding: 2vh; cursor: zoom-out; }
+        #modal.open { display: flex; }
+        #modal img { max-width: 100%; max-height: 100%; object-fit: contain; }
+
+        @media (max-width: 768px) {
+            #content { column-count: 1; }
+            header h1 { font-size: 4.5rem; }
+            .details-grid { grid-template-columns: 1fr; }
+            nav { top: 20px; right: 20px; }
         }
     </style>
 </head>
-<body class="antialiased text-gray-800">
-    <div class="min-h-screen flex flex-col items-center py-4 px-4 sm:px-6 lg:px-8 w-full">
-        <header class="w-full max-w-4xl mx-auto mb-8 text-center header-bg">
-            <h1 class="text-5xl font-extrabold text-gray-900 mb-4 rounded-md p-4 bg-white shadow-sm">
-                Tyler's Photo Gallery
-            </h1>
-            <p class="text-xl text-gray-600">Every picture tells a story.</p>
-        </header>
+<body>
 
-        <div id="loading-message">Loading photos...</div>
+    <div id="loader" class="loader">Fetching Gallery...</div>
 
-        <main class="w-full max-w-6xl mx-auto main-bg">
-            <div id="photo-grid">
+    <nav id="main-nav">
+        <a onclick="showPage('works')" id="nav-works" class="active">Works</a>
+        <a onclick="showPage('info')" id="nav-info">Info</a>
+        <a onclick="showPage('contact')" id="nav-contact">Contact</a>
+    </nav>
+
+    <!-- WORKS -->
+    <section id="page-works" class="page active">
+        <header><h1>Tyler<br>Williams</h1></header>
+        <main id="content"></main>
+        <footer><a onclick="scrollToTop()" class="back-to-top">↑ Back to Top</a></footer>
+    </section>
+
+    <!-- INFO -->
+    <section id="page-info" class="page">
+        <div class="info-container">
+            <span class="byline">Background</span>
+            <p class="info-text">From Charlotte, North Carolina — now based in Austin, Texas. Currently working media in the U.S. Army.</p>
+            <span class="byline">The Vision</span>
+            <p class="info-text">Specializing in the intersection of high-performance automotive art, expansive landscapes, and the raw character of portraiture.</p>
+            <div class="details-grid">
+                <div class="detail-block">
+                    <h3>My Favorite Kit</h3>
+                    <p>Body: Canon AE-1 Program</p>
+                    <p>Lens: Canon EF 85 1.2L II</p>
                 </div>
-        </main>
+                <div class="detail-block">
+                    <h3>Experience</h3>
+                    <p>Self-taught since high school. Completely self-taught with a background in engineering, I previously captured the automotive world semi-professionally and now maintain photography as a primary creative pursuit.</p>
+                </div>
+            </div>
+        </div>
+        <footer><a onclick="scrollToTop()" class="back-to-top">↑ Back to Top</a></footer>
+    </section>
 
-        <footer class="w-full max-w-4xl mx-auto mt-12 text-center text-gray-500 text-sm footer-bg">
-            <p>&copy; 2025 Tyler's Photo Gallery. All rights reserved.</p>
-        </footer>
-    </div>
+    <!-- CONTACT -->
+    <section id="page-contact" class="page">
+        <div class="contact-container">
+            <span class="byline">Contact</span>
+            <h2 style="font-family: var(--font-serif); font-size: 3rem; margin-bottom: 2rem; font-weight: 400;">Get in touch</h2>
+            <form class="contact-form" action="https://formspree.io/f/your-email@gmail.com" method="POST">
+                <div class="form-group"><label>Name</label><input type="text" name="name" required></div>
+                <div class="form-group"><label>Email</label><input type="email" name="_replyto" required></div>
+                <div class="form-group"><label>Message</label><textarea name="message" required></textarea></div>
+                <button type="submit" class="submit-btn">Send Message</button>
+            </form>
+        </div>
+        <footer><a onclick="scrollToTop()" class="back-to-top">↑ Back to Top</a></footer>
+    </section>
 
-    <div id="image-modal-overlay">
-        <img id="modal-image" src="" alt="Full size photo">
-        <button id="modal-close-btn">&times;</button>
-    </div>
+    <div id="modal"><img id="modal-img" src="" alt=""></div>
 
     <script>
-        document.addEventListener('DOMContentLoaded', async () => {
-            const owner = 'twilliams986';
-            const repo = 'twilliams986.github.io';
-            const imagePath = 'images'; // The folder where most gallery images are
-            const backgroundFileName = 'TJW9258.jpg'; // Still excluded from gallery
-            const excludedGalleryFileName = 'TJW0819.jpg'; // Still excluded from gallery
+        const config = {
+            owner: 'twilliams986',
+            repo: 'twilliams986.github.io',
+            path: 'images',
+            exclude: ['TJW9258.jpg', 'TJW0819.jpg', 'icon.png', 'profile.jpg']
+        };
 
-            // UPDATED: New tiled background image details
-            const newTiledBackgroundPath = 'images/background';
-            const newTiledBackgroundFileName = 'Gemini_Generated_Image_hiirrzhiirrzhiir~2.jpg';
+        const container = document.getElementById('content');
+        const loader = document.getElementById('loader');
+        const modal = document.getElementById('modal');
+        const modalImg = document.getElementById('modal-img');
 
-            // GitHub API URL for the main images folder (for gallery photos)
-            const githubApiUrl = `https://api.github.com/repos/${owner}/${repo}/contents/${imagePath}`;
-            const photoGrid = document.getElementById('photo-grid');
-            const loadingMessage = document.getElementById('loading-message');
+        function scrollToTop() { window.scrollTo({ top: 0, behavior: 'smooth' }); }
 
-            // Modal elements
-            const imageModalOverlay = document.getElementById('image-modal-overlay');
-            const modalImage = document.getElementById('modal-image');
-            const modalCloseBtn = document.getElementById('modal-close-btn');
+        function showPage(pageId) {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('nav a').forEach(a => a.classList.remove('active'));
+            document.getElementById(`page-${pageId}`).classList.add('active');
+            document.getElementById(`nav-${pageId}`).classList.add('active');
+            window.scrollTo(0, 0);
+        }
 
-            // Function to open the modal
-            const openModal = (imageUrl, imageAlt) => {
-                modalImage.src = imageUrl;
-                modalImage.alt = imageAlt;
-                imageModalOverlay.classList.add('open');
-                document.body.style.overflow = 'hidden'; // Prevent scrolling when modal is open
-            };
-
-            // Function to close the modal
-            const closeModal = () => {
-                imageModalOverlay.classList.remove('open');
-                document.body.style.overflow = ''; // Restore scrolling
-            };
-
-            // Event listeners for modal close
-            modalCloseBtn.addEventListener('click', closeModal);
-            imageModalOverlay.addEventListener('click', (e) => {
-                // Close modal if clicking on the overlay, not the image itself
-                if (e.target === imageModalOverlay) {
-                    closeModal();
-                }
-            });
-
+        async function init() {
             try {
-                // Fetch the contents of the images directory from GitHub API
-                const response = await fetch(githubApiUrl);
-                if (!response.ok) {
-                    throw new Error(`GitHub API error: ${response.statusText}`);
-                }
-                const files = await response.json();
+                const res = await fetch(`https://api.github.com/repos/${config.owner}/${config.repo}/contents/${config.path}`);
+                const files = await res.json();
+                
+                const photos = files.filter(f => 
+                    f.type === 'file' && 
+                    /\.(jpg|jpeg|png|webp)$/i.test(f.name) &&
+                    !config.exclude.includes(f.name)
+                );
 
-                // Filter for image files, excluding specific ones
-                let imageUrls = files
-                    .filter(file => 
-                        file.type === 'file' && 
-                        /\.(jpg|jpeg|png|gif|webp|svg)$/i.test(file.name) &&
-                        file.name !== backgroundFileName && // Exclude original background candidate
-                        file.name !== excludedGalleryFileName // Exclude explicitly removed gallery image
-                    )
-                    .map(file => file.download_url);
+                // Dynamically build the grid
+                photos.forEach((photo) => {
+                    const el = document.createElement('div');
+                    el.className = 'item';
+                    const wrap = document.createElement('div');
+                    wrap.className = 'media-wrap';
+                    
+                    const img = new Image();
+                    img.src = photo.download_url;
+                    img.loading = "lazy"; // Browser-level lazy loading for 90+ photos
+                    
+                    img.onload = () => img.classList.add('loaded');
+                    
+                    wrap.appendChild(img);
+                    el.appendChild(wrap);
+                    container.appendChild(el);
 
-                // IMPORTANT: If the new tiled background is in a SUBFOLDER of 'images',
-                // the main API call won't see it. We need to handle its exclusion carefully.
-                // Assuming `newTiledBackgroundFileName` is *not* in the main `images` folder,
-                // but in `images/background/`, it won't be in `files` array from `githubApiUrl`.
-                // If it were in the same `images` folder, the filter above would need to exclude it by name.
-                // Since it's in a subfolder, the current filter is fine for the main gallery.
+                    wrap.onclick = () => {
+                        modalImg.src = photo.download_url;
+                        modal.classList.add('open');
+                    };
+                });
 
-                // Shuffle the array of image URLs
-                for (let i = imageUrls.length - 1; i > 0; i--) {
-                    const j = Math.floor(Math.random() * (i + 1));
-                    [imageUrls[i], imageUrls[j]] = [imageUrls[j], imageUrls[i]]; // ES6 swap
-                }
+                loader.style.display = 'none';
+                container.classList.add('ready');
 
-                // Clear loading message
-                loadingMessage.style.display = 'none';
-
-                // Dynamically create and append photo cards
-                if (imageUrls.length > 0) {
-                    imageUrls.forEach((url, index) => {
-                        // Extract a title from the filename (e.g., "my-photo.jpg" -> "My Photo")
-                        const fileName = url.substring(url.lastIndexOf('/') + 1);
-                        const title = fileName.replace(/\.(jpg|jpeg|png|gif|webp|svg)$/i, '')
-                                                .replace(/[-_]/g, ' ')
-                                                .split(' ')
-                                                .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-                                                .join(' ');
-
-                        // Randomly apply a size variant to images
-                        const randomVal = Math.random();
-                        let sizeVariantClass = '';
-                        if (randomVal < 0.33) { // ~33% chance for small variant
-                            sizeVariantClass = 'image-variant-small';
-                        } else if (randomVal < 0.66) { // ~33% chance for medium variant
-                            sizeVariantClass = 'image-variant-medium';
-                        }
-                        // Otherwise, it remains default (100% width) - ~33% chance
-
-                        const photoCardDiv = document.createElement('div');
-                        photoCardDiv.className = `overflow-hidden group relative`;
-                        photoCardDiv.innerHTML = `
-                            <img src="${url}" alt="${title}" class="gallery-image ${sizeVariantClass}">
-                        `;
-                        photoGrid.appendChild(photoCardDiv);
-
-                        // Add click listener to open modal
-                        photoCardDiv.addEventListener('click', () => {
-                            openModal(url, title);
-                        });
-
-                        // Trigger the fade-in animation with a staggered delay
-                        setTimeout(() => {
-                            photoCardDiv.classList.add('loaded');
-                        }, index * 100); // 100ms delay per photo for waterfall effect
-                    });
-                } else {
-                    photoGrid.innerHTML = '<p class="text-center text-gray-600 col-span-full">No images found in the specified GitHub repository path (excluding background images).</p>';
-                }
-
-            } catch (error) {
-                console.error("Error fetching images:", error);
-                loadingMessage.textContent = 'Failed to load photos. Please check the repository path and your internet connection.';
-                loadingMessage.style.color = '#ef4444'; // Tailwind red-500
+            } catch (err) {
+                loader.innerText = "Error loading gallery.";
+                console.error(err);
             }
-        });
+        }
+
+        modal.onclick = () => modal.classList.remove('open');
+        init();
     </script>
 </body>
 </html>
