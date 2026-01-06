@@ -62,13 +62,13 @@
             letter-spacing: -0.02em;
         }
 
-        /* Dynamic Grid */
+        /* Fixed Mosaic Grid */
         #content {
             padding: 0 6vw 5vh;
             column-count: 2;
-            column-gap: 40px;
+            column-gap: 30px;
             opacity: 0;
-            transition: opacity 1s ease;
+            transition: opacity 0.8s ease;
         }
         #content.ready { opacity: 1; }
 
@@ -83,23 +83,29 @@
             color: #888;
         }
 
-        .item { break-inside: avoid; margin-bottom: 40px; display: block; }
+        .item { 
+            break-inside: avoid; 
+            margin-bottom: 30px; 
+            display: block; 
+            width: 100%;
+        }
+        
         .media-wrap {
             cursor: zoom-in;
             overflow: hidden;
-            background: #f7f7f7;
+            background: #fdfdfd;
             position: relative;
-            transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
         }
+        
         .media-wrap img {
             width: 100%;
             height: auto;
             display: block;
-            transition: opacity 0.4s ease, transform 0.6s ease;
-            opacity: 0; /* Hidden until loaded */
+            transition: opacity 0.5s ease, transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+            opacity: 0; 
         }
         .media-wrap img.loaded { opacity: 1; }
-        .media-wrap:hover img { transform: scale(1.02); opacity: 0.8; }
+        .media-wrap:hover img { transform: scale(1.03); }
 
         /* Sections */
         .info-container, .contact-container { padding: 20vh 10vw 5vh; max-width: 1200px; }
@@ -110,7 +116,6 @@
         .detail-block h3 { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.2em; margin-bottom: 1rem; border-bottom: 1px solid #eee; padding-bottom: 0.5rem; }
         .detail-block p { font-size: 1rem; line-height: 1.6; color: #333; }
 
-        /* Form */
         .contact-form { max-width: 600px; width: 100%; margin-top: 2rem; }
         .form-group { margin-bottom: 2rem; }
         .form-group label { display: block; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.5rem; color: #888; }
@@ -130,14 +135,13 @@
         @media (max-width: 768px) {
             #content { column-count: 1; }
             header h1 { font-size: 4.5rem; }
-            .details-grid { grid-template-columns: 1fr; }
             nav { top: 20px; right: 20px; }
         }
     </style>
 </head>
 <body>
 
-    <div id="loader" class="loader">Fetching Gallery...</div>
+    <div id="loader" class="loader">Loading Archive...</div>
 
     <nav id="main-nav">
         <a onclick="showPage('works')" id="nav-works" class="active">Works</a>
@@ -145,14 +149,12 @@
         <a onclick="showPage('contact')" id="nav-contact">Contact</a>
     </nav>
 
-    <!-- WORKS -->
     <section id="page-works" class="page active">
         <header><h1>Tyler<br>Williams</h1></header>
         <main id="content"></main>
         <footer><a onclick="scrollToTop()" class="back-to-top">↑ Back to Top</a></footer>
     </section>
 
-    <!-- INFO -->
     <section id="page-info" class="page">
         <div class="info-container">
             <span class="byline">Background</span>
@@ -167,14 +169,13 @@
                 </div>
                 <div class="detail-block">
                     <h3>Experience</h3>
-                    <p>Self-taught since high school. Completely self-taught with a background in engineering, I previously captured the automotive world semi-professionally and now maintain photography as a primary creative pursuit.</p>
+                    <p>Self-taught with a background in engineering, I previously captured the automotive world semi-professionally and now maintain photography as a primary creative pursuit.</p>
                 </div>
             </div>
         </div>
         <footer><a onclick="scrollToTop()" class="back-to-top">↑ Back to Top</a></footer>
     </section>
 
-    <!-- CONTACT -->
     <section id="page-contact" class="page">
         <div class="contact-container">
             <span class="byline">Contact</span>
@@ -219,14 +220,19 @@
                 const res = await fetch(`https://api.github.com/repos/${config.owner}/${config.repo}/contents/${config.path}`);
                 const files = await res.json();
                 
-                const photos = files.filter(f => 
+                // 1. Filter images
+                let photos = files.filter(f => 
                     f.type === 'file' && 
                     /\.(jpg|jpeg|png|webp)$/i.test(f.name) &&
                     !config.exclude.includes(f.name)
                 );
 
-                // Dynamically build the grid
-                photos.forEach((photo) => {
+                // 2. SORT BY NAME: This gives you full control. 
+                // Rename files in your folder (01.jpg, 02.jpg) to force a specific order.
+                photos.sort((a, b) => a.name.localeCompare(b.name, undefined, {numeric: true, sensitivity: 'base'}));
+
+                // 3. Render items in sorted order
+                for (const photo of photos) {
                     const el = document.createElement('div');
                     el.className = 'item';
                     const wrap = document.createElement('div');
@@ -234,7 +240,7 @@
                     
                     const img = new Image();
                     img.src = photo.download_url;
-                    img.loading = "lazy"; // Browser-level lazy loading for 90+ photos
+                    img.loading = "lazy"; 
                     
                     img.onload = () => img.classList.add('loaded');
                     
@@ -246,8 +252,9 @@
                         modalImg.src = photo.download_url;
                         modal.classList.add('open');
                     };
-                });
+                }
 
+                // Show container once metadata is ready
                 loader.style.display = 'none';
                 container.classList.add('ready');
 
@@ -257,8 +264,4 @@
             }
         }
 
-        modal.onclick = () => modal.classList.remove('open');
-        init();
-    </script>
-</body>
-</html>
+        modal.onclick = () => modal.classList.remove
