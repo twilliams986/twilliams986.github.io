@@ -110,8 +110,25 @@
         #modal img { max-width: 95vw; max-height: 95vh; object-fit: contain; }
 
         /* Sections */
-        .info-container, .contact-container { padding: 15vh 6vw 5vh; max-width: 1400px; margin: 0 auto; }
-        .info-text { font-family: var(--font-serif); font-size: clamp(1.5rem, 3vw, 2.5rem); line-height: 1.3; margin-bottom: 2rem; }
+        .info-container, .contact-container { padding: 10vh 6vw 5vh; max-width: 1400px; margin: 0 auto; }
+        .info-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 8vw; }
+        .profile-wrap { width: 100%; background: #f7f7f7; overflow: hidden; aspect-ratio: 4/5; border-radius: 4px; }
+        .profile-wrap img { width: 100%; height: 100%; object-fit: cover; display: block; filter: grayscale(10%); }
+
+        .byline { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.3em; color: #888; margin-bottom: 1.5rem; display: block; }
+        .info-text { font-family: var(--font-serif); font-size: clamp(1.5rem, 3vw, 2.5rem); line-height: 1.3; margin-bottom: 4rem; }
+        
+        .contact-form { max-width: 600px; margin-top: 2rem; }
+        .form-group { margin-bottom: 2rem; }
+        .form-group label { display: block; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.5rem; color: #888; }
+        .form-group input, .form-group textarea {
+            width: 100%; border: none; border-bottom: 1px solid #000; padding: 0.5rem 0; outline: none; background: transparent;
+        }
+        .submit-btn { background: #000; color: #fff; padding: 1rem 2rem; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.2em; cursor: pointer; border-radius: 2px; }
+
+        @media (max-width: 1024px) {
+            .info-layout { grid-template-columns: 1fr; }
+        }
     </style>
 </head>
 <body>
@@ -129,13 +146,29 @@
 
     <section id="page-info" class="page">
         <div class="info-container">
-            <p class="info-text">Based in Austin, Texas. Specializing in automotive and portrait photography.</p>
+            <div class="info-layout">
+                <div class="profile-wrap">
+                    <img src="https://cdn.jsdelivr.net/gh/twilliams986/twilliams986.github.io@main/about/profile.jpg" alt="Tyler Williams" onerror="this.style.display='none'">
+                </div>
+                <div>
+                    <span class="byline">Background</span>
+                    <p class="info-text">From Charlotte, North Carolina — now based in Austin, Texas. Currently working media in the U.S. Army.</p>
+                    <span class="byline">The Vision</span>
+                    <p class="info-text">Automotive art, breathtaking landscapes, and raw character portraiture.</p>
+                </div>
+            </div>
         </div>
     </section>
 
     <section id="page-contact" class="page">
         <div class="contact-container">
-            <p class="info-text">Get in touch via <a href="mailto:twilliams986@gmail.com" class="underline">Email</a></p>
+            <h2 style="font-family: var(--font-serif); font-size: 3rem; margin-bottom: 2rem;">Get in touch</h2>
+            <form class="contact-form" action="https://formspree.io/f/xzdznrqv" method="POST">
+                <div class="form-group"><label>Name</label><input type="text" name="name" required></div>
+                <div class="form-group"><label>Email</label><input type="email" name="email" required></div>
+                <div class="form-group"><label>Message</label><textarea name="message" rows="4" required></textarea></div>
+                <button type="submit" class="submit-btn">Send Message</button>
+            </form>
         </div>
     </section>
 
@@ -163,7 +196,6 @@
 
         async function init() {
             try {
-                // Fetch using cache busting to ensure order doesn't get stuck on old API results
                 const res = await fetch(`https://api.github.com/repos/${config.owner}/${config.repo}/contents/${config.path}?t=${Date.now()}`);
                 const files = await res.json();
                 
@@ -173,36 +205,26 @@
                     !config.exclude.includes(f.name)
                 );
 
-                // Strict alphanumeric sort ensures consistency
                 photos.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }));
 
                 photos.forEach(photo => {
                     const url = `https://cdn.jsdelivr.net/gh/${config.owner}/${config.repo}@main/${config.path}/${photo.name}`;
-                    
                     const item = document.createElement('div');
                     item.className = 'item';
-                    
                     const wrap = document.createElement('div');
                     wrap.className = 'media-wrap';
-                    
                     const img = new Image();
                     img.src = url;
                     img.loading = "lazy";
-                    
-                    img.onload = () => {
-                        item.classList.add('visible');
-                    };
-
+                    img.onload = () => item.classList.add('visible');
                     wrap.appendChild(img);
                     item.appendChild(wrap);
                     container.appendChild(item);
-
                     wrap.onclick = () => {
                         modalImg.src = url;
                         modal.classList.add('open');
                     };
                 });
-
             } catch (err) {
                 console.error("Failed to load gallery.");
             }
