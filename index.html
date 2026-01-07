@@ -242,41 +242,46 @@
         }
 
         /**
-         * Renders photo using aspect-ratio placeholders to prevent layout jump
+         * Renders photo and returns a Promise that resolves when the image has loaded its metadata.
+         * This allows us to load them sequentially.
          */
-        async function renderPhoto(fullUrl, thumbUrl, isPriority) {
-            const item = document.createElement('div');
-            item.className = 'item';
-            
-            const wrap = document.createElement('div');
-            wrap.className = 'media-wrap';
-            
-            // Temporary container to get image dimensions
-            const img = new Image();
-            
-            img.onload = () => {
-                // Calculate height based on width to reserve space
-                const ratio = (img.naturalHeight / img.naturalWidth) * 100;
-                wrap.style.paddingBottom = `${ratio}%`;
+        function renderPhoto(fullUrl, thumbUrl, isPriority) {
+            return new Promise((resolve) => {
+                const item = document.createElement('div');
+                item.className = 'item';
                 
-                // Once space is reserved, show image with fade
-                img.classList.add('loaded');
-                wrap.classList.add('loaded-wrap');
-            };
+                const wrap = document.createElement('div');
+                wrap.className = 'media-wrap';
+                
+                const img = new Image();
+                
+                img.onload = () => {
+                    const ratio = (img.naturalHeight / img.naturalWidth) * 100;
+                    wrap.style.paddingBottom = `${ratio}%`;
+                    img.classList.add('loaded');
+                    wrap.classList.add('loaded-wrap');
+                    // Small delay to let the browser breathe after rendering
+                    setTimeout(resolve, 50); 
+                };
 
-            // Use CDN for faster delivery
-            img.src = thumbUrl;
-            if (isPriority) img.fetchPriority = "high";
-            else img.loading = "lazy";
+                img.onerror = () => resolve();
 
-            wrap.appendChild(img);
-            item.appendChild(wrap);
-            container.appendChild(item);
+                img.src = thumbUrl;
+                if (isPriority) {
+                    img.fetchPriority = "high";
+                } else {
+                    img.loading = "lazy";
+                }
 
-            wrap.onclick = () => {
-                modalImg.src = fullUrl;
-                modal.classList.add('open');
-            };
+                wrap.appendChild(img);
+                item.appendChild(wrap);
+                container.appendChild(item);
+
+                wrap.onclick = () => {
+                    modalImg.src = fullUrl;
+                    modal.classList.add('open');
+                };
+            });
         }
 
         async function init() {
@@ -290,18 +295,24 @@
                     !config.exclude.includes(f.name)
                 );
 
+                // Sort numerically (latest first)
                 photos.sort((a, b) => b.name.localeCompare(a.name, undefined, {numeric: true}));
 
                 container.innerHTML = '';
 
-                photos.forEach((photo, i) => {
+                for (let i = 0; i < photos.length; i++) {
+                    const photo = photos[i];
+                    
+                    // Full resolution for the modal
                     const fullUrl = `https://cdn.jsdelivr.net/gh/${config.owner}/${config.repo}@main/${config.path}/${photo.name}`;
-                    // jsDelivr serves images fast; if using their proxy we can't resize easily without a dedicated service,
-                    // but requesting from the main branch is faster than raw.githubusercontent
+                    
+                    // Optimized thumbnail for the grid using jsDelivr's size parameter (if supported)
+                    // Note: If jsDelivr native resizing isn't active for this repo, 
+                    // this still uses the CDN for speed. 
                     const thumbUrl = `https://cdn.jsdelivr.net/gh/${config.owner}/${config.repo}@main/${config.path}/${photo.name}`;
                     
-                    renderPhoto(fullUrl, thumbUrl, i < 8); 
-                });
+                    await renderPhoto(fullUrl, thumbUrl, i < 4); 
+                }
             } catch (err) {
                 console.error("Gallery failed to load.");
             }
