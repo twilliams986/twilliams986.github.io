@@ -67,6 +67,12 @@
             column-count: 2;
             column-gap: 20px;
             min-height: 100vh;
+            opacity: 0;
+            transition: opacity 1s ease-in;
+        }
+        
+        #content.loaded {
+            opacity: 1;
         }
         
         @media (min-width: 768px) {
@@ -99,28 +105,14 @@
             z-index: 10;
         }
 
-        /* Loading Shimmer Placeholder */
-        @keyframes shimmer {
-            0% { background-position: -200% 0; }
-            100% { background-position: 200% 0; }
-        }
-
         .media-wrap {
             cursor: zoom-in;
             position: relative;
             width: 100%;
             overflow: hidden;
-            background: #f0f0f0;
-            background: linear-gradient(90deg, #f0f0f0 25%, #f8f8f8 50%, #f0f0f0 75%);
-            background-size: 200% 100%;
-            animation: shimmer 2s infinite linear;
+            background: #f7f7f7;
             border-radius: 4px;
             transition: box-shadow 0.5s ease;
-        }
-        
-        .media-wrap.loaded-wrap {
-            animation: none;
-            background: #f7f7f7;
         }
         
         .item:hover .media-wrap {
@@ -129,18 +121,12 @@
 
         .media-wrap img {
             width: 100%;
-            height: 100%;
-            object-fit: cover;
             display: block;
-            transition: opacity 1s ease;
+            transition: opacity 0.8s ease;
             opacity: 0; 
-            position: absolute;
-            top: 0;
-            left: 0;
-            will-change: opacity;
         }
         
-        .media-wrap img.loaded { 
+        .media-wrap img.visible { 
             opacity: 1; 
         }
 
@@ -241,52 +227,9 @@
             window.scrollTo(0, 0);
         }
 
-        /**
-         * Renders photo and returns a Promise that resolves when the image has loaded its metadata.
-         * This allows us to load them sequentially.
-         */
-        function renderPhoto(fullUrl, thumbUrl, isPriority) {
-            return new Promise((resolve) => {
-                const item = document.createElement('div');
-                item.className = 'item';
-                
-                const wrap = document.createElement('div');
-                wrap.className = 'media-wrap';
-                
-                const img = new Image();
-                
-                img.onload = () => {
-                    const ratio = (img.naturalHeight / img.naturalWidth) * 100;
-                    wrap.style.paddingBottom = `${ratio}%`;
-                    img.classList.add('loaded');
-                    wrap.classList.add('loaded-wrap');
-                    // Small delay to let the browser breathe after rendering
-                    setTimeout(resolve, 50); 
-                };
-
-                img.onerror = () => resolve();
-
-                img.src = thumbUrl;
-                if (isPriority) {
-                    img.fetchPriority = "high";
-                } else {
-                    img.loading = "lazy";
-                }
-
-                wrap.appendChild(img);
-                item.appendChild(wrap);
-                container.appendChild(item);
-
-                wrap.onclick = () => {
-                    modalImg.src = fullUrl;
-                    modal.classList.add('open');
-                };
-            });
-        }
-
         async function init() {
             try {
-                const res = await fetch(`https://api.github.com/repos/${config.owner}/${config.repo}/contents/${config.path}?t=${Date.now()}`);
+                const res = await fetch(`https://api.github.com/repos/${config.owner}/${config.repo}/contents/${config.path}`);
                 const files = await res.json();
                 
                 let photos = files.filter(f => 
@@ -295,23 +238,50 @@
                     !config.exclude.includes(f.name)
                 );
 
-                // FIXED: Using a more consistent sorting algorithm (localeCompare with numeric) 
-                // to prevent randomization across reloads.
-                photos.sort((a, b) => b.name.localeCompare(a.name, undefined, { numeric: true, sensitivity: 'base' }));
+                // Strict alphanumeric sort
+                photos.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' }));
 
                 container.innerHTML = '';
 
-                for (let i = 0; i < photos.length; i++) {
-                    const photo = photos[i];
-                    
-                    // Full resolution for the modal
+                // Create all placeholders first to maintain order in DOM
+                const photoElements = photos.map(photo => {
                     const fullUrl = `https://cdn.jsdelivr.net/gh/${config.owner}/${config.repo}@main/${config.path}/${photo.name}`;
                     
-                    // Optimized thumbnail via CDN
-                    const thumbUrl = `https://cdn.jsdelivr.net/gh/${config.owner}/${config.repo}@main/${config.path}/${photo.name}`;
+                    const item = document.createElement('div');
+                    item.className = 'item';
+                    const wrap = document.createElement('div');
+                    wrap.className = 'media-wrap';
+                    const img = new Image();
                     
-                    await renderPhoto(fullUrl, thumbUrl, i < 4); 
-                }
+                    img.src = fullUrl;
+                    img.loading = "lazy";
+                    
+                    wrap.appendChild(img);
+                    item.appendChild(wrap);
+                    container.appendChild(item);
+
+                    wrap.onclick = () => {
+                        modalImg.src = fullUrl;
+                        modal.classList.add('open');
+                    };
+
+                    return { img, wrap };
+                });
+
+                // Once DOM is structured, fade in the container
+                requestAnimationFrame(() => {
+                    container.classList.add('loaded');
+                });
+
+                // Individually reveal images as they finish loading to avoid white blocks
+                photoElements.forEach(({ img, wrap }) => {
+                    if (img.complete) {
+                        img.classList.add('visible');
+                    } else {
+                        img.onload = () => img.classList.add('visible');
+                    }
+                });
+
             } catch (err) {
                 console.error("Gallery failed to load.");
             }
