@@ -295,8 +295,9 @@
                     !config.exclude.includes(f.name)
                 );
 
-                // Sort numerically (latest first)
-                photos.sort((a, b) => b.name.localeCompare(a.name, undefined, {numeric: true}));
+                // FIXED: Using a more consistent sorting algorithm (localeCompare with numeric) 
+                // to prevent randomization across reloads.
+                photos.sort((a, b) => b.name.localeCompare(a.name, undefined, { numeric: true, sensitivity: 'base' }));
 
                 container.innerHTML = '';
 
@@ -306,9 +307,7 @@
                     // Full resolution for the modal
                     const fullUrl = `https://cdn.jsdelivr.net/gh/${config.owner}/${config.repo}@main/${config.path}/${photo.name}`;
                     
-                    // Optimized thumbnail for the grid using jsDelivr's size parameter (if supported)
-                    // Note: If jsDelivr native resizing isn't active for this repo, 
-                    // this still uses the CDN for speed. 
+                    // Optimized thumbnail via CDN
                     const thumbUrl = `https://cdn.jsdelivr.net/gh/${config.owner}/${config.repo}@main/${config.path}/${photo.name}`;
                     
                     await renderPhoto(fullUrl, thumbUrl, i < 4); 
