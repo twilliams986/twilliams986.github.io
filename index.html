@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tyler Williams — Portfolio</title>
     
-    <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/twilliams986/twilliams986.github.io/main/images/icon/icon.png"> 
+    <link rel="icon" type="image/png" href="https://twilliams986.github.io/images/icon/icon.png"> 
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&family=Playfair+Display:ital,wght@0,400;1,400&display=swap" rel="stylesheet">
     
@@ -18,7 +18,6 @@
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        html { scroll-behavior: smooth; }
         body {
             background-color: var(--bg);
             color: var(--fg);
@@ -62,116 +61,85 @@
             letter-spacing: -0.02em;
         }
 
-        /* Responsive Mosaic Grid */
+        /* Static Grid for Speed and Stability */
         #content {
             padding: 0 6vw 5vh;
-            column-count: 2; /* Mobile default */
-            column-gap: 15px;
-            opacity: 0;
-            transition: opacity 0.8s ease;
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
         }
         
-        /* Desktop: 4 columns, wider screens: 5 columns */
         @media (min-width: 1024px) {
             #content {
-                column-count: 4;
-                column-gap: 20px;
-            }
-        }
-        @media (min-width: 1600px) {
-            #content {
-                column-count: 5;
+                grid-template-columns: repeat(4, 1fr);
+                gap: 20px;
             }
         }
 
-        #content.ready { opacity: 1; }
-
-        .loader {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            font-size: 0.7rem;
-            text-transform: uppercase;
-            letter-spacing: 0.2em;
-            color: #888;
-            text-align: center;
-        }
-
-        .item { 
-            break-inside: avoid; 
-            margin-bottom: 15px; 
-            display: block; 
-            width: 100%;
-        }
-
-        @media (min-width: 1024px) {
-            .item { margin-bottom: 20px; }
-        }
+        .item { width: 100%; overflow: hidden; }
         
+        /* Shimmer loading effect */
         .media-wrap {
             cursor: zoom-in;
-            overflow: hidden;
-            background: #fdfdfd;
+            background: #f3f3f3;
             position: relative;
+            width: 100%;
+            aspect-ratio: 3 / 2;
+            overflow: hidden;
+            background: linear-gradient(90deg, #f3f3f3 25%, #ececec 50%, #f3f3f3 75%);
+            background-size: 200% 100%;
+            animation: shimmer 2s infinite linear;
+        }
+
+        @keyframes shimmer {
+            from { background-position: -200% 0; }
+            to { background-position: 200% 0; }
         }
         
         .media-wrap img {
             width: 100%;
-            height: auto;
+            height: 100%;
+            object-fit: cover;
             display: block;
-            transition: opacity 0.5s ease, transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+            transition: opacity 0.4s ease-in;
             opacity: 0; 
         }
-        .media-wrap img.loaded { opacity: 1; }
-        .media-wrap:hover img { transform: scale(1.03); }
+        .media-wrap img.loaded { 
+            opacity: 1; 
+        }
+        .media-wrap.loaded { animation: none; background: transparent; }
 
-        /* Sections Layout */
+        /* Sections */
         .info-container, .contact-container { padding: 15vh 6vw 5vh; max-width: 1400px; margin: 0 auto; }
-        
-        /* Info Page Specifics */
-        .info-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 8vw; align-items: start; }
-        .profile-wrap { width: 100%; background: #f7f7f7; overflow: hidden; }
-        .profile-wrap img { width: 100%; height: auto; display: block; filter: grayscale(20%); }
+        .info-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 8vw; }
+        .profile-wrap { width: 100%; background: #f7f7f7; overflow: hidden; aspect-ratio: 4/5; }
+        .profile-wrap img { width: 100%; height: 100%; object-fit: cover; display: block; filter: grayscale(10%); }
 
         .byline { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.3em; color: #888; margin-bottom: 1.5rem; display: block; }
         .info-text { font-family: var(--font-serif); font-size: clamp(1.5rem, 3vw, 2.5rem); line-height: 1.3; margin-bottom: 4rem; }
         
-        .details-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 3rem; margin-top: 2rem; }
-        .detail-block h3 { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.2em; margin-bottom: 1rem; border-bottom: 1px solid #eee; padding-bottom: 0.5rem; }
-        .detail-block p { font-size: 0.95rem; line-height: 1.6; color: #333; }
-
-        .contact-form { max-width: 600px; width: 100%; margin-top: 2rem; }
+        .contact-form { max-width: 600px; margin-top: 2rem; }
         .form-group { margin-bottom: 2rem; }
         .form-group label { display: block; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 0.5rem; color: #888; }
         .form-group input, .form-group textarea {
-            width: 100%; border: none; border-bottom: 1px solid #000; padding: 0.5rem 0; font-family: var(--font-sans); font-size: 1rem; outline: none; background: transparent;
+            width: 100%; border: none; border-bottom: 1px solid #000; padding: 0.5rem 0; outline: none; background: transparent;
         }
-        .submit-btn { background: #000; color: #fff; border: none; padding: 1rem 2rem; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.2em; cursor: pointer; }
+        .submit-btn { background: #000; color: #fff; padding: 1rem 2rem; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.2em; cursor: pointer; }
 
         footer { padding: 5vh 6vw 10vh; text-align: center; }
-        .back-to-top { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.25em; color: #aaa; text-decoration: none; cursor: pointer; }
+        .back-to-top { font-size: 0.65rem; text-transform: uppercase; color: #aaa; text-decoration: none; cursor: pointer; }
 
         /* Modal */
         #modal { position: fixed; inset: 0; background: white; z-index: 1000; display: none; justify-content: center; align-items: center; padding: 2vh; cursor: zoom-out; }
         #modal.open { display: flex; }
-        #modal img { max-width: 100%; max-height: 100%; object-fit: contain; }
+        #modal img { max-width: 95vw; max-height: 95vh; object-fit: contain; }
 
         @media (max-width: 1024px) {
-            .info-layout { grid-template-columns: 1fr; gap: 4rem; }
-            .info-container { padding-top: 10vh; }
-        }
-
-        @media (max-width: 768px) {
-            header h1 { font-size: 4.5rem; }
-            nav { top: 20px; right: 20px; }
-            .details-grid { grid-template-columns: 1fr; }
+            .info-layout { grid-template-columns: 1fr; }
         }
     </style>
 </head>
 <body>
-
-    <div id="loader" class="loader">Loading Archive...</div>
 
     <nav id="main-nav">
         <a onclick="showPage('works')" id="nav-works" class="active">Works</a>
@@ -189,25 +157,13 @@
         <div class="info-container">
             <div class="info-layout">
                 <div class="profile-wrap">
-                    <img src="https://raw.githubusercontent.com/twilliams986/twilliams986.github.io/main/about/profile.jpg" alt="Tyler Williams" onerror="this.parentElement.style.display='none'">
+                    <img src="https://raw.githubusercontent.com/twilliams986/twilliams986.github.io/main/about/profile.jpg" alt="Tyler Williams">
                 </div>
                 <div>
                     <span class="byline">Background</span>
                     <p class="info-text">From Charlotte, North Carolina — now based in Austin, Texas. Currently working media in the U.S. Army.</p>
                     <span class="byline">The Vision</span>
-                    <p class="info-text">Specializing in the intersection of high-performance automotive art, expansive landscapes, and the raw character of portraiture.</p>
-                    
-                    <div class="details-grid">
-                        <div class="detail-block">
-                            <h3>My Favorite Kit</h3>
-                            <p>Body: Canon AE-1 Program</p>
-                            <p>Lens: Canon EF 85 1.2L II</p>
-                        </div>
-                        <div class="detail-block">
-                            <h3>Experience</h3>
-                            <p>Self-taught with a background in engineering, I maintain photography as a primary creative pursuit, capturing the character of the world through a technical lens.</p>
-                        </div>
-                    </div>
+                    <p class="info-text">Specializing in high-performance automotive art and raw character portraiture.</p>
                 </div>
             </div>
         </div>
@@ -216,27 +172,14 @@
 
     <section id="page-contact" class="page">
         <div class="contact-container">
-            <span class="byline">Contact</span>
-            <h2 style="font-family: var(--font-serif); font-size: 3rem; margin-bottom: 2rem; font-weight: 400;">Get in touch</h2>
-            
-            <!-- Updated Formspree Action URL -->
+            <h2 style="font-family: var(--font-serif); font-size: 3rem; margin-bottom: 2rem;">Get in touch</h2>
             <form class="contact-form" action="https://formspree.io/f/xzdznrqv" method="POST">
-                <div class="form-group">
-                    <label>Name</label>
-                    <input type="text" name="name" required>
-                </div>
-                <div class="form-group">
-                    <label>Email</label>
-                    <input type="email" name="email" required>
-                </div>
-                <div class="form-group">
-                    <label>Message</label>
-                    <textarea name="message" rows="4" required></textarea>
-                </div>
+                <div class="form-group"><label>Name</label><input type="text" name="name" required></div>
+                <div class="form-group"><label>Email</label><input type="email" name="email" required></div>
+                <div class="form-group"><label>Message</label><textarea name="message" rows="4" required></textarea></div>
                 <button type="submit" class="submit-btn">Send Message</button>
             </form>
         </div>
-        <footer><a onclick="scrollToTop()" class="back-to-top">↑ Back to Top</a></footer>
     </section>
 
     <div id="modal"><img id="modal-img" src="" alt=""></div>
@@ -250,7 +193,6 @@
         };
 
         const container = document.getElementById('content');
-        const loader = document.getElementById('loader');
         const modal = document.getElementById('modal');
         const modalImg = document.getElementById('modal-img');
 
@@ -264,7 +206,7 @@
             window.scrollTo(0, 0);
         }
 
-        function renderPhoto(url) {
+        function renderPhoto(url, isPriority) {
             const el = document.createElement('div');
             el.className = 'item';
             const wrap = document.createElement('div');
@@ -272,9 +214,17 @@
             
             const img = new Image();
             img.src = url;
-            img.loading = "lazy"; 
             
-            img.onload = () => img.classList.add('loaded');
+            if (isPriority) {
+                img.fetchPriority = "high";
+            } else {
+                img.loading = "lazy";
+            }
+            
+            img.onload = () => {
+                img.classList.add('loaded');
+                wrap.classList.add('loaded');
+            };
             
             wrap.appendChild(img);
             el.appendChild(wrap);
@@ -289,28 +239,24 @@
         async function init() {
             try {
                 const res = await fetch(`https://api.github.com/repos/${config.owner}/${config.repo}/contents/${config.path}`);
-                
-                if (!res.ok) {
-                    if (res.status === 403) throw new Error("API Rate Limit Reached.");
-                    throw new Error("Repository empty or inaccessible.");
-                }
-
                 const files = await res.json();
+                
                 let photos = files.filter(f => 
                     f.type === 'file' && 
                     /\.(jpg|jpeg|png|webp)$/i.test(f.name) &&
                     !config.exclude.includes(f.name)
                 );
 
-                photos.sort((a, b) => a.name.localeCompare(b.name, undefined, {numeric: true, sensitivity: 'base'}));
+                // Sort numerical
+                photos.sort((a, b) => a.name.localeCompare(b.name, undefined, {numeric: true}));
 
-                photos.forEach(photo => renderPhoto(photo.download_url));
-                
-                loader.style.display = 'none';
-                container.classList.add('ready');
-
+                photos.forEach((photo, index) => {
+                    // Optimized raw content URL
+                    const rawUrl = `https://raw.githubusercontent.com/${config.owner}/${config.repo}/main/${config.path}/${photo.name}`;
+                    renderPhoto(rawUrl, index < 4); 
+                });
             } catch (err) {
-                loader.innerHTML = `${err.message}<br><span style="font-size:0.6rem; margin-top:10px; display:block;">Push your images to GitHub to populate this gallery.</span>`;
+                console.error("Load failed.");
             }
         }
 
