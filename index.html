@@ -81,6 +81,7 @@
             text-transform: uppercase;
             letter-spacing: 0.2em;
             color: #888;
+            text-align: center;
         }
 
         .item { 
@@ -215,53 +216,18 @@
             window.scrollTo(0, 0);
         }
 
-        async function init() {
-            try {
-                const res = await fetch(`https://api.github.com/repos/${config.owner}/${config.repo}/contents/${config.path}`);
-                const files = await res.json();
-                
-                // 1. Filter images
-                let photos = files.filter(f => 
-                    f.type === 'file' && 
-                    /\.(jpg|jpeg|png|webp)$/i.test(f.name) &&
-                    !config.exclude.includes(f.name)
-                );
-
-                // 2. SORT BY NAME: This gives you full control. 
-                // Rename files in your folder (01.jpg, 02.jpg) to force a specific order.
-                photos.sort((a, b) => a.name.localeCompare(b.name, undefined, {numeric: true, sensitivity: 'base'}));
-
-                // 3. Render items in sorted order
-                for (const photo of photos) {
-                    const el = document.createElement('div');
-                    el.className = 'item';
-                    const wrap = document.createElement('div');
-                    wrap.className = 'media-wrap';
-                    
-                    const img = new Image();
-                    img.src = photo.download_url;
-                    img.loading = "lazy"; 
-                    
-                    img.onload = () => img.classList.add('loaded');
-                    
-                    wrap.appendChild(img);
-                    el.appendChild(wrap);
-                    container.appendChild(el);
-
-                    wrap.onclick = () => {
-                        modalImg.src = photo.download_url;
-                        modal.classList.add('open');
-                    };
-                }
-
-                // Show container once metadata is ready
-                loader.style.display = 'none';
-                container.classList.add('ready');
-
-            } catch (err) {
-                loader.innerText = "Error loading gallery.";
-                console.error(err);
-            }
-        }
-
-        modal.onclick = () => modal.classList.remove
+        function renderPhoto(url) {
+            const el = document.createElement('div');
+            el.className = 'item';
+            const wrap = document.createElement('div');
+            wrap.className = 'media-wrap';
+            
+            const img = new Image();
+            img.src = url;
+            img.loading = "lazy"; 
+            
+            img.onload = () => img.classList.add('loaded');
+            
+            wrap.appendChild(img);
+            el.appendChild(wrap);
+            container.appendChild(
