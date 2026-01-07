@@ -61,31 +61,48 @@
             letter-spacing: -0.02em;
         }
 
-        /* Static Grid for Speed and Stability */
+        /* Mosaic/Masonry Grid */
         #content {
             padding: 0 6vw 5vh;
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 12px;
+            column-count: 2;
+            column-gap: 12px;
         }
         
-        @media (min-width: 1024px) {
+        @media (min-width: 768px) {
             #content {
-                grid-template-columns: repeat(4, 1fr);
-                gap: 20px;
+                column-count: 3;
+                column-gap: 16px;
             }
         }
 
-        .item { width: 100%; overflow: hidden; }
+        @media (min-width: 1200px) {
+            #content {
+                column-count: 4;
+                column-gap: 20px;
+            }
+        }
+
+        .item { 
+            break-inside: avoid;
+            margin-bottom: 12px;
+            width: 100%;
+        }
         
-        /* Shimmer loading effect */
+        @media (min-width: 768px) {
+            .item { margin-bottom: 16px; }
+        }
+        
+        @media (min-width: 1200px) {
+            .item { margin-bottom: 20px; }
+        }
+
         .media-wrap {
             cursor: zoom-in;
             background: #f3f3f3;
             position: relative;
             width: 100%;
-            aspect-ratio: 3 / 2;
             overflow: hidden;
+            /* Shimmer for un-loaded state */
             background: linear-gradient(90deg, #f3f3f3 25%, #ececec 50%, #f3f3f3 75%);
             background-size: 200% 100%;
             animation: shimmer 2s infinite linear;
@@ -98,16 +115,20 @@
         
         .media-wrap img {
             width: 100%;
-            height: 100%;
-            object-fit: cover;
+            height: auto;
             display: block;
-            transition: opacity 0.4s ease-in;
+            transition: opacity 0.5s ease-in;
             opacity: 0; 
         }
+        
         .media-wrap img.loaded { 
             opacity: 1; 
         }
-        .media-wrap.loaded { animation: none; background: transparent; }
+        
+        .media-wrap.loaded { 
+            animation: none; 
+            background: transparent; 
+        }
 
         /* Sections */
         .info-container, .contact-container { padding: 15vh 6vw 5vh; max-width: 1400px; margin: 0 auto; }
@@ -247,13 +268,14 @@
                     !config.exclude.includes(f.name)
                 );
 
-                // Sort numerical
+                // SORTING LOGIC: 
+                // We keep a consistent alphabetical/numerical sort to ensure the layout 
+                // is identical every time a user visits.
                 photos.sort((a, b) => a.name.localeCompare(b.name, undefined, {numeric: true}));
 
                 photos.forEach((photo, index) => {
-                    // Optimized raw content URL
                     const rawUrl = `https://raw.githubusercontent.com/${config.owner}/${config.repo}/main/${config.path}/${photo.name}`;
-                    renderPhoto(rawUrl, index < 4); 
+                    renderPhoto(rawUrl, index < 6); 
                 });
             } catch (err) {
                 console.error("Load failed.");
