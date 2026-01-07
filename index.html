@@ -61,12 +61,11 @@
             letter-spacing: -0.02em;
         }
 
-        /* Stable Mosaic/Masonry Grid */
+        /* Stable Masonry Grid */
         #content {
             padding: 0 6vw 5vh;
             column-count: 2;
             column-gap: 12px;
-            /* Prevent re-flow by keeping a min-height during load */
             min-height: 100vh;
         }
         
@@ -88,30 +87,22 @@
             break-inside: avoid;
             margin-bottom: 12px;
             width: 100%;
-            /* Fixed initial container state to prevent jumping */
             display: block;
+            background: #f8f8f8;
+            border-radius: 2px;
         }
         
-        @media (min-width: 768px) {
-            .item { margin-bottom: 16px; }
-        }
-        
-        @media (min-width: 1200px) {
-            .item { margin-bottom: 20px; }
-        }
+        @media (min-width: 768px) { .item { margin-bottom: 16px; } }
+        @media (min-width: 1200px) { .item { margin-bottom: 20px; } }
 
         .media-wrap {
             cursor: zoom-in;
-            background: #f8f8f8;
             position: relative;
             width: 100%;
             overflow: hidden;
-            /* Placeholder background ensures layout is reserved immediately */
-            min-height: 200px; 
             background: linear-gradient(90deg, #f8f8f8 25%, #f1f1f1 50%, #f8f8f8 75%);
             background-size: 200% 100%;
             animation: shimmer 1.5s infinite linear;
-            transition: background 0.4s ease;
         }
 
         @keyframes shimmer {
@@ -123,8 +114,7 @@
             width: 100%;
             height: auto;
             display: block;
-            /* Controlled fade to eliminate snap-in jumping */
-            transition: opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: opacity 0.6s ease-in-out;
             opacity: 0; 
             will-change: opacity;
         }
@@ -186,7 +176,7 @@
         <div class="info-container">
             <div class="info-layout">
                 <div class="profile-wrap">
-                    <img src="https://raw.githubusercontent.com/twilliams986/twilliams986.github.io/main/about/profile.jpg" alt="Tyler Williams">
+                    <img src="https://cdn.jsdelivr.net/gh/twilliams986/twilliams986.github.io@main/about/profile.jpg" alt="Tyler Williams">
                 </div>
                 <div>
                     <span class="byline">Background</span>
@@ -235,34 +225,33 @@
             window.scrollTo(0, 0);
         }
 
-        // Logic to build the layout once without shifting
-        function renderPhoto(url, isPriority) {
-            const el = document.createElement('div');
-            el.className = 'item';
+        async function renderPhoto(url, isPriority) {
+            const item = document.createElement('div');
+            item.className = 'item';
+            
             const wrap = document.createElement('div');
             wrap.className = 'media-wrap';
             
             const img = new Image();
             img.src = url;
             
-            // Speed optimization: prioritize initial viewport
+            // Set priority
             if (isPriority) {
                 img.fetchPriority = "high";
             } else {
                 img.loading = "lazy";
             }
-            
-            img.onload = () => {
-                // Ensure image is ready before triggering CSS transition
-                requestAnimationFrame(() => {
-                    img.classList.add('loaded');
-                    wrap.classList.add('loaded');
-                });
-            };
-            
+
+            // We mount the structure immediately to reserve space in the masonry
             wrap.appendChild(img);
-            el.appendChild(wrap);
-            container.appendChild(el);
+            item.appendChild(wrap);
+            container.appendChild(item);
+
+            // Handle load event
+            img.onload = () => {
+                img.classList.add('loaded');
+                wrap.classList.add('loaded');
+            };
 
             wrap.onclick = () => {
                 modalImg.src = url;
@@ -272,7 +261,7 @@
 
         async function init() {
             try {
-                // Fetch list once to determine order
+                // Fetch GitHub API for file list
                 const res = await fetch(`https://api.github.com/repos/${config.owner}/${config.repo}/contents/${config.path}`);
                 const files = await res.json();
                 
@@ -282,16 +271,19 @@
                     !config.exclude.includes(f.name)
                 );
 
-                // Static numerical sort to prevent order jumping between sessions
+                // Sort numerical/alphabetical
                 photos.sort((a, b) => a.name.localeCompare(b.name, undefined, {numeric: true}));
 
-                // Batch render to main thread
+                // Use a DocumentFragment for one-shot DOM injection to prevent layout thrashing
+                const fragment = document.createDocumentFragment();
+
                 photos.forEach((photo, index) => {
-                    const rawUrl = `https://raw.githubusercontent.com/${config.owner}/${config.repo}/main/${config.path}/${photo.name}`;
-                    renderPhoto(rawUrl, index < 8); 
+                    // Using jsDelivr CDN for better performance than raw github links
+                    const cdnUrl = `https://cdn.jsdelivr.net/gh/${config.owner}/${config.repo}@main/${config.path}/${photo.name}`;
+                    renderPhoto(cdnUrl, index < 8); 
                 });
             } catch (err) {
-                console.error("Gallery initialization failed.");
+                console.error("Gallery failed to initialize.");
             }
         }
 
