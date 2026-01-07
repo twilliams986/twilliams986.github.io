@@ -61,7 +61,7 @@
             letter-spacing: -0.02em;
         }
 
-        /* Stable Masonry Grid */
+        /* Stable Mosaic/Masonry Grid */
         #content {
             padding: 0 6vw 5vh;
             column-count: 2;
@@ -88,8 +88,6 @@
             margin-bottom: 12px;
             width: 100%;
             display: block;
-            background: #f8f8f8;
-            border-radius: 2px;
         }
         
         @media (min-width: 768px) { .item { margin-bottom: 16px; } }
@@ -100,9 +98,11 @@
             position: relative;
             width: 100%;
             overflow: hidden;
+            background: #f8f8f8;
             background: linear-gradient(90deg, #f8f8f8 25%, #f1f1f1 50%, #f8f8f8 75%);
             background-size: 200% 100%;
             animation: shimmer 1.5s infinite linear;
+            border-radius: 2px;
         }
 
         @keyframes shimmer {
@@ -112,9 +112,10 @@
         
         .media-wrap img {
             width: 100%;
-            height: auto;
+            height: 100%;
+            object-fit: cover;
             display: block;
-            transition: opacity 0.6s ease-in-out;
+            transition: opacity 0.8s ease-in-out;
             opacity: 0; 
             will-change: opacity;
         }
@@ -225,6 +226,10 @@
             window.scrollTo(0, 0);
         }
 
+        /**
+         * Renders a photo with its space reserved based on aspect ratio
+         * to prevent the "jumping" layout shift as images load.
+         */
         async function renderPhoto(url, isPriority) {
             const item = document.createElement('div');
             item.className = 'item';
@@ -235,23 +240,32 @@
             const img = new Image();
             img.src = url;
             
-            // Set priority
             if (isPriority) {
                 img.fetchPriority = "high";
             } else {
                 img.loading = "lazy";
             }
 
-            // We mount the structure immediately to reserve space in the masonry
+            // Detect aspect ratio once to lock the layout
+            img.onload = () => {
+                const ratio = (img.naturalHeight / img.naturalWidth) * 100;
+                wrap.style.paddingBottom = `${ratio}%`;
+                
+                // Add class to reveal image
+                requestAnimationFrame(() => {
+                    img.classList.add('loaded');
+                    wrap.classList.add('loaded');
+                });
+            };
+
+            // Structure: wrap is the aspect-ratio container, img is absolute positioned inside
+            img.style.position = 'absolute';
+            img.style.top = '0';
+            img.style.left = '0';
+
             wrap.appendChild(img);
             item.appendChild(wrap);
             container.appendChild(item);
-
-            // Handle load event
-            img.onload = () => {
-                img.classList.add('loaded');
-                wrap.classList.add('loaded');
-            };
 
             wrap.onclick = () => {
                 modalImg.src = url;
@@ -261,7 +275,6 @@
 
         async function init() {
             try {
-                // Fetch GitHub API for file list
                 const res = await fetch(`https://api.github.com/repos/${config.owner}/${config.repo}/contents/${config.path}`);
                 const files = await res.json();
                 
@@ -271,19 +284,17 @@
                     !config.exclude.includes(f.name)
                 );
 
-                // Sort numerical/alphabetical
+                // STATIC SORT: Numerical/Alphabetical by filename to prevent randomization
                 photos.sort((a, b) => a.name.localeCompare(b.name, undefined, {numeric: true}));
 
-                // Use a DocumentFragment for one-shot DOM injection to prevent layout thrashing
-                const fragment = document.createDocumentFragment();
-
-                photos.forEach((photo, index) => {
-                    // Using jsDelivr CDN for better performance than raw github links
+                // Render in the specific sorted order
+                for (let i = 0; i < photos.length; i++) {
+                    const photo = photos[i];
                     const cdnUrl = `https://cdn.jsdelivr.net/gh/${config.owner}/${config.repo}@main/${config.path}/${photo.name}`;
-                    renderPhoto(cdnUrl, index < 8); 
-                });
+                    renderPhoto(cdnUrl, i < 8); 
+                }
             } catch (err) {
-                console.error("Gallery failed to initialize.");
+                console.error("Gallery initialization failed.");
             }
         }
 
