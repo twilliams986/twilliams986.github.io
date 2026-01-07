@@ -61,11 +61,13 @@
             letter-spacing: -0.02em;
         }
 
-        /* Mosaic/Masonry Grid */
+        /* Stable Mosaic/Masonry Grid */
         #content {
             padding: 0 6vw 5vh;
             column-count: 2;
             column-gap: 12px;
+            /* Prevent re-flow by keeping a min-height during load */
+            min-height: 100vh;
         }
         
         @media (min-width: 768px) {
@@ -86,6 +88,8 @@
             break-inside: avoid;
             margin-bottom: 12px;
             width: 100%;
+            /* Fixed initial container state to prevent jumping */
+            display: block;
         }
         
         @media (min-width: 768px) {
@@ -98,14 +102,16 @@
 
         .media-wrap {
             cursor: zoom-in;
-            background: #f3f3f3;
+            background: #f8f8f8;
             position: relative;
             width: 100%;
             overflow: hidden;
-            /* Shimmer for un-loaded state */
-            background: linear-gradient(90deg, #f3f3f3 25%, #ececec 50%, #f3f3f3 75%);
+            /* Placeholder background ensures layout is reserved immediately */
+            min-height: 200px; 
+            background: linear-gradient(90deg, #f8f8f8 25%, #f1f1f1 50%, #f8f8f8 75%);
             background-size: 200% 100%;
-            animation: shimmer 2s infinite linear;
+            animation: shimmer 1.5s infinite linear;
+            transition: background 0.4s ease;
         }
 
         @keyframes shimmer {
@@ -117,8 +123,10 @@
             width: 100%;
             height: auto;
             display: block;
-            transition: opacity 0.5s ease-in;
+            /* Controlled fade to eliminate snap-in jumping */
+            transition: opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1);
             opacity: 0; 
+            will-change: opacity;
         }
         
         .media-wrap img.loaded { 
@@ -227,6 +235,7 @@
             window.scrollTo(0, 0);
         }
 
+        // Logic to build the layout once without shifting
         function renderPhoto(url, isPriority) {
             const el = document.createElement('div');
             el.className = 'item';
@@ -236,6 +245,7 @@
             const img = new Image();
             img.src = url;
             
+            // Speed optimization: prioritize initial viewport
             if (isPriority) {
                 img.fetchPriority = "high";
             } else {
@@ -243,8 +253,11 @@
             }
             
             img.onload = () => {
-                img.classList.add('loaded');
-                wrap.classList.add('loaded');
+                // Ensure image is ready before triggering CSS transition
+                requestAnimationFrame(() => {
+                    img.classList.add('loaded');
+                    wrap.classList.add('loaded');
+                });
             };
             
             wrap.appendChild(img);
@@ -259,6 +272,7 @@
 
         async function init() {
             try {
+                // Fetch list once to determine order
                 const res = await fetch(`https://api.github.com/repos/${config.owner}/${config.repo}/contents/${config.path}`);
                 const files = await res.json();
                 
@@ -268,17 +282,16 @@
                     !config.exclude.includes(f.name)
                 );
 
-                // SORTING LOGIC: 
-                // We keep a consistent alphabetical/numerical sort to ensure the layout 
-                // is identical every time a user visits.
+                // Static numerical sort to prevent order jumping between sessions
                 photos.sort((a, b) => a.name.localeCompare(b.name, undefined, {numeric: true}));
 
+                // Batch render to main thread
                 photos.forEach((photo, index) => {
                     const rawUrl = `https://raw.githubusercontent.com/${config.owner}/${config.repo}/main/${config.path}/${photo.name}`;
-                    renderPhoto(rawUrl, index < 6); 
+                    renderPhoto(rawUrl, index < 8); 
                 });
             } catch (err) {
-                console.error("Load failed.");
+                console.error("Gallery initialization failed.");
             }
         }
 
