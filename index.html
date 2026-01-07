@@ -230,4 +230,45 @@
             
             wrap.appendChild(img);
             el.appendChild(wrap);
-            container.appendChild(
+            container.appendChild(el);
+
+            wrap.onclick = () => {
+                modalImg.src = url;
+                modal.classList.add('open');
+            };
+        }
+
+        async function init() {
+            try {
+                const res = await fetch(`https://api.github.com/repos/${config.owner}/${config.repo}/contents/${config.path}`);
+                
+                if (!res.ok) {
+                    if (res.status === 403) throw new Error("API Rate Limit Reached.");
+                    throw new Error("Repository empty or inaccessible.");
+                }
+
+                const files = await res.json();
+                let photos = files.filter(f => 
+                    f.type === 'file' && 
+                    /\.(jpg|jpeg|png|webp)$/i.test(f.name) &&
+                    !config.exclude.includes(f.name)
+                );
+
+                // Alphabetic sort for consistency
+                photos.sort((a, b) => a.name.localeCompare(b.name, undefined, {numeric: true, sensitivity: 'base'}));
+
+                photos.forEach(photo => renderPhoto(photo.download_url));
+                
+                loader.style.display = 'none';
+                container.classList.add('ready');
+
+            } catch (err) {
+                loader.innerHTML = `${err.message}<br><span style="font-size:0.6rem; margin-top:10px; display:block;">Push your images to GitHub to populate this gallery.</span>`;
+            }
+        }
+
+        modal.onclick = () => modal.classList.remove('open');
+        init();
+    </script>
+</body>
+</html>
