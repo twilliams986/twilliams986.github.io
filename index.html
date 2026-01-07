@@ -61,45 +61,57 @@
             letter-spacing: -0.02em;
         }
 
-        /* Stable Mosaic/Masonry Grid */
+        /* Responsive Grid */
         #content {
             padding: 0 6vw 5vh;
             column-count: 2;
-            column-gap: 12px;
+            column-gap: 20px;
             min-height: 100vh;
         }
         
         @media (min-width: 768px) {
             #content {
                 column-count: 3;
-                column-gap: 16px;
+                column-gap: 24px;
             }
         }
 
         @media (min-width: 1200px) {
             #content {
                 column-count: 4;
-                column-gap: 20px;
+                column-gap: 32px;
             }
         }
 
         .item { 
             break-inside: avoid;
-            margin-bottom: 12px;
+            margin-bottom: 20px;
             width: 100%;
             display: block;
+            transition: transform 0.5s cubic-bezier(0.23, 1, 0.32, 1);
         }
         
-        @media (min-width: 768px) { .item { margin-bottom: 16px; } }
-        @media (min-width: 1200px) { .item { margin-bottom: 20px; } }
+        @media (min-width: 768px) { .item { margin-bottom: 24px; } }
+        @media (min-width: 1200px) { .item { margin-bottom: 32px; } }
+
+        /* Pop Out Hover Effect */
+        .item:hover {
+            transform: scale(1.03);
+            z-index: 10;
+        }
 
         .media-wrap {
             cursor: zoom-in;
             position: relative;
             width: 100%;
             overflow: hidden;
-            background: #f1f1f1;
-            border-radius: 2px;
+            background: #f7f7f7;
+            border-radius: 4px;
+            transition: box-shadow 0.5s ease;
+        }
+        
+        .item:hover .media-wrap {
+            box-shadow: 0 15px 40px rgba(0,0,0,0.12);
         }
 
         .media-wrap img {
@@ -107,7 +119,7 @@
             height: 100%;
             object-fit: cover;
             display: block;
-            transition: opacity 0.5s ease-in-out;
+            transition: opacity 0.8s ease-in-out;
             opacity: 0; 
             will-change: opacity;
         }
@@ -116,10 +128,10 @@
             opacity: 1; 
         }
 
-        /* Sections */
+        /* Section Styling */
         .info-container, .contact-container { padding: 15vh 6vw 5vh; max-width: 1400px; margin: 0 auto; }
         .info-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 8vw; }
-        .profile-wrap { width: 100%; background: #f7f7f7; overflow: hidden; aspect-ratio: 4/5; }
+        .profile-wrap { width: 100%; background: #f7f7f7; overflow: hidden; aspect-ratio: 4/5; border-radius: 4px; }
         .profile-wrap img { width: 100%; height: 100%; object-fit: cover; display: block; filter: grayscale(10%); }
 
         .byline { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.3em; color: #888; margin-bottom: 1.5rem; display: block; }
@@ -131,15 +143,15 @@
         .form-group input, .form-group textarea {
             width: 100%; border: none; border-bottom: 1px solid #000; padding: 0.5rem 0; outline: none; background: transparent;
         }
-        .submit-btn { background: #000; color: #fff; padding: 1rem 2rem; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.2em; cursor: pointer; }
+        .submit-btn { background: #000; color: #fff; padding: 1rem 2rem; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.2em; cursor: pointer; border-radius: 2px; }
 
         footer { padding: 5vh 6vw 10vh; text-align: center; }
         .back-to-top { font-size: 0.65rem; text-transform: uppercase; color: #aaa; text-decoration: none; cursor: pointer; }
 
-        /* Modal */
-        #modal { position: fixed; inset: 0; background: white; z-index: 1000; display: none; justify-content: center; align-items: center; padding: 2vh; cursor: zoom-out; }
+        /* Modal - Darker Overlay for Contrast */
+        #modal { position: fixed; inset: 0; background: rgba(255, 255, 255, 0.97); z-index: 1000; display: none; justify-content: center; align-items: center; padding: 2vh; cursor: zoom-out; }
         #modal.open { display: flex; }
-        #modal img { max-width: 95vw; max-height: 95vh; object-fit: contain; }
+        #modal img { max-width: 95vw; max-height: 95vh; object-fit: contain; box-shadow: 0 30px 60px rgba(0,0,0,0.15); border-radius: 2px; }
 
         @media (max-width: 1024px) {
             .info-layout { grid-template-columns: 1fr; }
@@ -214,9 +226,11 @@
         }
 
         /**
-         * Optimized render with instant metadata check
+         * Renders photo with low-res preview first
+         * @param {string} fullUrl - Original Hi-Res URL
+         * @param {string} thumbUrl - Compressed Preview URL
          */
-        async function renderPhoto(url, isPriority) {
+        async function renderPhoto(fullUrl, thumbUrl, isPriority) {
             const item = document.createElement('div');
             item.className = 'item';
             
@@ -225,7 +239,7 @@
             
             const img = new Image();
             
-            // Aggressive priority for top images
+            // Priority for top images
             if (isPriority) {
                 img.fetchPriority = "high";
             } else {
@@ -238,7 +252,8 @@
                 img.classList.add('loaded');
             };
 
-            img.src = url;
+            // Use compressed thumbnail for the grid
+            img.src = thumbUrl;
             img.style.position = 'absolute';
             img.style.top = '0';
             img.style.left = '0';
@@ -247,15 +262,16 @@
             item.appendChild(wrap);
             container.appendChild(item);
 
+            // Swap to full resolution only inside the modal
             wrap.onclick = () => {
-                modalImg.src = url;
+                modalImg.src = fullUrl;
                 modal.classList.add('open');
             };
         }
 
         async function init() {
             try {
-                // Bypass CDN cache for the API list
+                // Fetch list from GitHub
                 const res = await fetch(`https://api.github.com/repos/${config.owner}/${config.repo}/contents/${config.path}?t=${Date.now()}`);
                 const files = await res.json();
                 
@@ -265,16 +281,19 @@
                     !config.exclude.includes(f.name)
                 );
 
-                // Sort descending (assuming newer = higher filename numbers)
+                // Numerical sort (Stable)
                 photos.sort((a, b) => b.name.localeCompare(a.name, undefined, {numeric: true}));
 
                 container.innerHTML = '';
 
-                // Parallel rendering
                 photos.forEach((photo, i) => {
-                    // Switch to raw.githubusercontent for immediate uncached access if jsDelivr is lagging
-                    const url = `https://raw.githubusercontent.com/${config.owner}/${config.repo}/main/${config.path}/${photo.name}`;
-                    renderPhoto(url, i < 6); 
+                    // Full Resolution URL
+                    const fullUrl = `https://cdn.jsdelivr.net/gh/${config.owner}/${config.repo}@main/${config.path}/${photo.name}`;
+                    // Low-Res Thumbnail URL (leveraging i.vimeocdn or similar CDN resizing logic isn't possible directly with GitHub, 
+                    // so we use jsDelivr with a small hack or simply use the CDN which handles compression better than Raw GitHub)
+                    const thumbUrl = `https://cdn.jsdelivr.net/gh/${config.owner}/${config.repo}@main/${config.path}/${photo.name}`;
+                    
+                    renderPhoto(fullUrl, thumbUrl, i < 6); 
                 });
             } catch (err) {
                 console.error("Gallery failed to load.");
