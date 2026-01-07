@@ -108,14 +108,20 @@
         .media-wrap img.loaded { opacity: 1; }
         .media-wrap:hover img { transform: scale(1.03); }
 
-        /* Sections */
-        .info-container, .contact-container { padding: 20vh 10vw 5vh; max-width: 1200px; }
-        .byline { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.3em; color: #888; margin-bottom: 0.5rem; display: block; }
-        .info-text { font-family: var(--font-serif); font-size: clamp(1.5rem, 4vw, 3rem); line-height: 1.2; margin-bottom: 6rem; }
+        /* Sections Layout */
+        .info-container, .contact-container { padding: 15vh 6vw 5vh; max-width: 1400px; margin: 0 auto; }
         
-        .details-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4rem; margin-top: 4rem; }
+        /* Info Page Specifics */
+        .info-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 8vw; align-items: start; }
+        .profile-wrap { width: 100%; background: #f7f7f7; overflow: hidden; }
+        .profile-wrap img { width: 100%; height: auto; display: block; filter: grayscale(20%); }
+
+        .byline { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.3em; color: #888; margin-bottom: 1.5rem; display: block; }
+        .info-text { font-family: var(--font-serif); font-size: clamp(1.5rem, 3vw, 2.5rem); line-height: 1.3; margin-bottom: 4rem; }
+        
+        .details-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 3rem; margin-top: 2rem; }
         .detail-block h3 { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.2em; margin-bottom: 1rem; border-bottom: 1px solid #eee; padding-bottom: 0.5rem; }
-        .detail-block p { font-size: 1rem; line-height: 1.6; color: #333; }
+        .detail-block p { font-size: 0.95rem; line-height: 1.6; color: #333; }
 
         .contact-form { max-width: 600px; width: 100%; margin-top: 2rem; }
         .form-group { margin-bottom: 2rem; }
@@ -133,10 +139,16 @@
         #modal.open { display: flex; }
         #modal img { max-width: 100%; max-height: 100%; object-fit: contain; }
 
+        @media (max-width: 1024px) {
+            .info-layout { grid-template-columns: 1fr; gap: 4rem; }
+            .info-container { padding-top: 10vh; }
+        }
+
         @media (max-width: 768px) {
             #content { column-count: 1; }
             header h1 { font-size: 4.5rem; }
             nav { top: 20px; right: 20px; }
+            .details-grid { grid-template-columns: 1fr; }
         }
     </style>
 </head>
@@ -158,19 +170,27 @@
 
     <section id="page-info" class="page">
         <div class="info-container">
-            <span class="byline">Background</span>
-            <p class="info-text">From Charlotte, North Carolina — now based in Austin, Texas. Currently working media in the U.S. Army.</p>
-            <span class="byline">The Vision</span>
-            <p class="info-text">Specializing in the intersection of high-performance automotive art, expansive landscapes, and the raw character of portraiture.</p>
-            <div class="details-grid">
-                <div class="detail-block">
-                    <h3>My Favorite Kit</h3>
-                    <p>Body: Canon AE-1 Program</p>
-                    <p>Lens: Canon EF 85 1.2L II</p>
+            <div class="info-layout">
+                <div class="profile-wrap">
+                    <img src="https://raw.githubusercontent.com/twilliams986/twilliams986.github.io/main/about/profile.jpg" alt="Tyler Williams" onerror="this.parentElement.style.display='none'">
                 </div>
-                <div class="detail-block">
-                    <h3>Experience</h3>
-                    <p>Self-taught with a background in engineering, I previously captured the automotive world semi-professionally and now maintain photography as a primary creative pursuit.</p>
+                <div>
+                    <span class="byline">Background</span>
+                    <p class="info-text">From Charlotte, North Carolina — now based in Austin, Texas. Currently working media in the U.S. Army.</p>
+                    <span class="byline">The Vision</span>
+                    <p class="info-text">Specializing in the intersection of high-performance automotive art, expansive landscapes, and the raw character of portraiture.</p>
+                    
+                    <div class="details-grid">
+                        <div class="detail-block">
+                            <h3>My Favorite Kit</h3>
+                            <p>Body: Canon AE-1 Program</p>
+                            <p>Lens: Canon EF 85 1.2L II</p>
+                        </div>
+                        <div class="detail-block">
+                            <h3>Experience</h3>
+                            <p>Self-taught with a background in engineering, I maintain photography as a primary creative pursuit, capturing the character of the world through a technical lens.</p>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -181,10 +201,21 @@
         <div class="contact-container">
             <span class="byline">Contact</span>
             <h2 style="font-family: var(--font-serif); font-size: 3rem; margin-bottom: 2rem; font-weight: 400;">Get in touch</h2>
-            <form class="contact-form" action="https://formspree.io/f/your-email@gmail.com" method="POST">
-                <div class="form-group"><label>Name</label><input type="text" name="name" required></div>
-                <div class="form-group"><label>Email</label><input type="email" name="_replyto" required></div>
-                <div class="form-group"><label>Message</label><textarea name="message" required></textarea></div>
+            
+            <!-- Updated Formspree Action URL -->
+            <form class="contact-form" action="https://formspree.io/f/xzdznrqv" method="POST">
+                <div class="form-group">
+                    <label>Name</label>
+                    <input type="text" name="name" required>
+                </div>
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" name="email" required>
+                </div>
+                <div class="form-group">
+                    <label>Message</label>
+                    <textarea name="message" rows="4" required></textarea>
+                </div>
                 <button type="submit" class="submit-btn">Send Message</button>
             </form>
         </div>
@@ -254,7 +285,6 @@
                     !config.exclude.includes(f.name)
                 );
 
-                // Alphabetic sort for consistency
                 photos.sort((a, b) => a.name.localeCompare(b.name, undefined, {numeric: true, sensitivity: 'base'}));
 
                 photos.forEach(photo => renderPhoto(photo.download_url));
