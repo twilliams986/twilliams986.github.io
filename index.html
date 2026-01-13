@@ -60,10 +60,11 @@
             letter-spacing: -0.02em;
         }
 
+        /* Masonry Grid Fix */
         #content {
             padding: 0 6vw 5vh;
             column-count: 2;
-            column-gap: 20px;
+            column-gap: 24px;
         }
         
         @media (min-width: 768px) { #content { column-count: 3; column-gap: 24px; } }
@@ -71,47 +72,37 @@
 
         .item { 
             break-inside: avoid;
-            margin-bottom: 20px;
+            margin-bottom: 24px;
             width: 100%;
             display: block;
+            opacity: 0;
+            transform: translateY(10px);
+            transition: opacity 0.6s ease, transform 0.6s ease;
+        }
+        
+        .item.ready {
+            opacity: 1;
+            transform: translateY(0);
         }
 
         .media-wrap {
             cursor: zoom-in;
             position: relative;
             width: 100%;
-            background: #f0f0f0;
-            border-radius: 4px;
+            background: #f4f4f4;
+            border-radius: 2px;
             overflow: hidden;
-            /* Prevent jumping: ensure the box has height even if img isn't there */
-            aspect-ratio: auto; 
-        }
-
-        /* Subtle pulse for empty boxes */
-        @keyframes pulse {
-            0% { background-color: #f0f0f0; }
-            50% { background-color: #f7f7f7; }
-            100% { background-color: #f0f0f0; }
-        }
-        .media-wrap:not(.loaded) {
-            animation: pulse 1.5s infinite ease-in-out;
         }
         
         .media-wrap img {
             width: 100%;
             display: block;
             height: auto;
-            opacity: 0;
-            transition: opacity 0.5s ease-in;
-        }
-
-        .media-wrap.loaded img {
-            opacity: 1;
+            transition: transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
         .media-wrap:hover img {
-            transform: scale(1.03);
-            transition: transform 0.6s cubic-bezier(0.165, 0.84, 0.44, 1), opacity 0.5s ease-in;
+            transform: scale(1.04);
         }
 
         /* Sections */
@@ -136,7 +127,7 @@
         #modal.open { display: flex; }
         #modal img { max-width: 95vw; max-height: 95vh; object-fit: contain; }
 
-        #load-more-sentinel { height: 50px; width: 100%; }
+        #load-more-sentinel { height: 100px; width: 100%; }
 
         @media (max-width: 1024px) { .info-layout { grid-template-columns: 1fr; } }
     </style>
@@ -165,7 +156,7 @@
                     <span class="byline">Background</span>
                     <p class="info-text">From Charlotte, North Carolina — now based in Austin, Texas. Currently working media in the U.S. Army.</p>
                     <span class="byline">The Vision</span>
-                    <p class="info-text">Specializing in automotive art, landscapes, and raw character portraiture.</p>
+                    <p class="info-text">Specializing in automotive art, landscapes, and raw portraiture.</p>
                 </div>
             </div>
         </div>
@@ -192,11 +183,13 @@
             imagesPath: 'images',
             thumbsPath: 'images/thumbnails',
             exclude: ['TJW9258.jpg', 'TJW0819.jpg', 'icon.png', 'profile.jpg'],
-            batchSize: 12 // Smaller batches load more responsively
+            batchSize: 12
         };
 
         let allPhotos = [];
         let currentIndex = 0;
+        let isRendering = false;
+        
         const container = document.getElementById('content');
         const modal = document.getElementById('modal');
         const modalImg = document.getElementById('modal-img');
@@ -210,40 +203,65 @@
             window.scrollTo(0, 0);
         }
 
-        function renderBatch() {
+        // Logic to render strictly in order without jumps
+        async function renderBatch() {
+            if (isRendering || currentIndex >= allPhotos.length) return;
+            isRendering = true;
+
             const nextBatch = allPhotos.slice(currentIndex, currentIndex + config.batchSize);
             
-            nextBatch.forEach(photo => {
-                const fullUrl = `https://cdn.jsdelivr.net/gh/${config.owner}/${config.repo}@main/${config.imagesPath}/${photo.name}`;
-                const thumbUrl = `https://cdn.jsdelivr.net/gh/${config.owner}/${config.repo}@main/${config.thumbsPath}/${photo.name}`;
-                
+            // Map over batch to pre-calculate dimensions
+            const promises = nextBatch.map(photo => {
+                return new Promise((resolve) => {
+                    const thumbUrl = `https://cdn.jsdelivr.net/gh/${config.owner}/${config.repo}@main/${config.thumbsPath}/${photo.name}`;
+                    const fullUrl = `https://cdn.jsdelivr.net/gh/${config.owner}/${config.repo}@main/${config.imagesPath}/${photo.name}`;
+                    
+                    const img = new Image();
+                    img.src = thumbUrl;
+                    
+                    img.onload = () => {
+                        resolve({
+                            name: photo.name,
+                            thumbUrl,
+                            fullUrl,
+                            aspect: img.naturalWidth / img.naturalHeight
+                        });
+                    };
+                    img.onerror = () => resolve(null);
+                });
+            });
+
+            const results = await Promise.all(promises);
+
+            results.forEach(data => {
+                if (!data) return;
+
                 const item = document.createElement('div');
                 item.className = 'item';
                 
                 const wrap = document.createElement('div');
                 wrap.className = 'media-wrap';
+                wrap.style.aspectRatio = data.aspect; // LOCKS height immediately
                 
-                const img = new Image();
-                img.src = thumbUrl;
-                img.loading = "lazy";
+                const displayImg = document.createElement('img');
+                displayImg.src = data.thumbUrl;
+                displayImg.loading = "lazy";
                 
-                img.onload = () => {
-                    // Set the aspect ratio based on natural dimensions to prevent layout shift
-                    wrap.style.aspectRatio = `${img.naturalWidth} / ${img.naturalHeight}`;
-                    wrap.classList.add('loaded');
-                };
-                
-                wrap.appendChild(img);
+                wrap.appendChild(displayImg);
                 item.appendChild(wrap);
                 container.appendChild(item);
 
+                // Short timeout to allow browser to register the item in the DOM before animating in
+                setTimeout(() => item.classList.add('ready'), 50);
+
                 wrap.onclick = () => {
-                    modalImg.src = fullUrl;
+                    modalImg.src = data.fullUrl;
                     modal.classList.add('open');
                 };
             });
 
             currentIndex += config.batchSize;
+            isRendering = false;
         }
 
         async function init() {
@@ -257,12 +275,13 @@
                     !config.exclude.includes(f.name)
                 );
 
+                // NATURAL SORTING (1, 2, 10 instead of 1, 10, 2)
                 allPhotos.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' }));
 
-                renderBatch();
+                await renderBatch();
 
                 const observer = new IntersectionObserver((entries) => {
-                    if (entries[0].isIntersecting && currentIndex < allPhotos.length) {
+                    if (entries[0].isIntersecting) {
                         renderBatch();
                     }
                 }, { rootMargin: '400px' });
@@ -270,7 +289,7 @@
                 observer.observe(sentinel);
 
             } catch (err) {
-                console.error("Init failed");
+                console.error("Gallery failed to initialize.");
             }
         }
 
