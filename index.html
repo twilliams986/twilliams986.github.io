@@ -91,11 +91,15 @@
             display: block;
             height: auto;
             opacity: 0;
-            transition: opacity 0.5s ease-in;
+            transition: opacity 0.5s ease-in, transform 0.5s ease;
         }
 
         .media-wrap img.visible {
             opacity: 1;
+        }
+
+        .media-wrap:hover img.visible {
+            transform: scale(1.03);
         }
 
         /* Sections */
@@ -146,7 +150,7 @@
                     <span class="byline">Background</span>
                     <p class="info-text">From Charlotte, North Carolina — now based in Austin, Texas. Currently working media in the U.S. Army.</p>
                     <span class="byline">The Vision</span>
-                    <p class="info-text">Specializing in high-performance automotive art and raw character portraiture.</p>
+                    <p class="info-text">Specializing in automotive art, breathtaking landscapes, and raw character portraiture.</p>
                 </div>
             </div>
         </div>
