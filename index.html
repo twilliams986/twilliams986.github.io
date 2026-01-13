@@ -74,14 +74,6 @@
             margin-bottom: 20px;
             width: 100%;
             display: block;
-            opacity: 0;
-            transform: translateY(10px);
-            transition: opacity 0.4s ease-out, transform 0.4s ease-out;
-        }
-        
-        .item.visible {
-            opacity: 1;
-            transform: translateY(0);
         }
 
         .media-wrap {
@@ -91,23 +83,20 @@
             background: #f7f7f7;
             border-radius: 4px;
             overflow: hidden;
+            min-height: 200px; /* Placeholder height while loading */
         }
         
         .media-wrap img {
             width: 100%;
             display: block;
             height: auto;
-            transition: transform 0.5s ease;
+            opacity: 0;
+            transition: opacity 0.5s ease-in;
         }
 
-        .media-wrap:hover img {
-            transform: scale(1.02);
+        .media-wrap img.visible {
+            opacity: 1;
         }
-
-        /* Modal */
-        #modal { position: fixed; inset: 0; background: rgba(255, 255, 255, 0.98); z-index: 1000; display: none; justify-content: center; align-items: center; padding: 2vh; cursor: zoom-out; }
-        #modal.open { display: flex; }
-        #modal img { max-width: 95vw; max-height: 95vh; object-fit: contain; }
 
         /* Sections */
         .info-container, .contact-container { padding: 10vh 6vw 5vh; max-width: 1400px; margin: 0 auto; }
@@ -126,9 +115,12 @@
         }
         .submit-btn { background: #000; color: #fff; padding: 1rem 2rem; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.2em; cursor: pointer; border-radius: 2px; }
 
-        @media (max-width: 1024px) {
-            .info-layout { grid-template-columns: 1fr; }
-        }
+        /* Modal */
+        #modal { position: fixed; inset: 0; background: rgba(255, 255, 255, 0.98); z-index: 1000; display: none; justify-content: center; align-items: center; padding: 2vh; cursor: zoom-out; }
+        #modal.open { display: flex; }
+        #modal img { max-width: 95vw; max-height: 95vh; object-fit: contain; }
+
+        @media (max-width: 1024px) { .info-layout { grid-template-columns: 1fr; } }
     </style>
 </head>
 <body>
@@ -148,13 +140,13 @@
         <div class="info-container">
             <div class="info-layout">
                 <div class="profile-wrap">
-                    <img src="https://cdn.jsdelivr.net/gh/twilliams986/twilliams986.github.io@main/about/profile.jpg" alt="Tyler Williams" onerror="this.style.display='none'">
+                    <img src="https://cdn.jsdelivr.net/gh/twilliams986/twilliams986.github.io@main/about/profile.jpg" alt="Tyler Williams">
                 </div>
                 <div>
                     <span class="byline">Background</span>
                     <p class="info-text">From Charlotte, North Carolina — now based in Austin, Texas. Currently working media in the U.S. Army.</p>
                     <span class="byline">The Vision</span>
-                    <p class="info-text">Automotive art, breathtaking landscapes, and raw character portraiture.</p>
+                    <p class="info-text">Specializing in high-performance automotive art and raw character portraiture.</p>
                 </div>
             </div>
         </div>
@@ -205,8 +197,10 @@
                     !config.exclude.includes(f.name)
                 );
 
+                // SORTING: Fixed alphanumeric sort
                 photos.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }));
 
+                // RENDER: Create DOM elements in sorted order first
                 photos.forEach(photo => {
                     const url = `https://cdn.jsdelivr.net/gh/${config.owner}/${config.repo}@main/${config.path}/${photo.name}`;
                     const item = document.createElement('div');
@@ -214,12 +208,15 @@
                     const wrap = document.createElement('div');
                     wrap.className = 'media-wrap';
                     const img = new Image();
+                    
                     img.src = url;
                     img.loading = "lazy";
-                    img.onload = () => item.classList.add('visible');
+                    img.onload = () => img.classList.add('visible');
+                    
                     wrap.appendChild(img);
                     item.appendChild(wrap);
                     container.appendChild(item);
+
                     wrap.onclick = () => {
                         modalImg.src = url;
                         modal.classList.add('open');
