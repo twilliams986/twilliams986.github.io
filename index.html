@@ -83,7 +83,7 @@
             background: #f7f7f7;
             border-radius: 4px;
             overflow: hidden;
-            min-height: 200px; /* Placeholder height while loading */
+            min-height: 250px;
         }
         
         .media-wrap img {
@@ -91,7 +91,7 @@
             display: block;
             height: auto;
             opacity: 0;
-            transition: opacity 0.5s ease-in, transform 0.5s ease;
+            transition: opacity 0.6s ease-out, transform 0.5s ease;
         }
 
         .media-wrap img.visible {
@@ -124,6 +124,8 @@
         #modal.open { display: flex; }
         #modal img { max-width: 95vw; max-height: 95vh; object-fit: contain; }
 
+        #load-more-sentinel { height: 50px; width: 100%; }
+
         @media (max-width: 1024px) { .info-layout { grid-template-columns: 1fr; } }
     </style>
 </head>
@@ -138,6 +140,7 @@
     <section id="page-works" class="page active">
         <header><h1>Tyler<br>Williams</h1></header>
         <main id="content"></main>
+        <div id="load-more-sentinel"></div>
     </section>
 
     <section id="page-info" class="page">
@@ -175,12 +178,16 @@
             owner: 'twilliams986',
             repo: 'twilliams986.github.io',
             path: 'images',
-            exclude: ['TJW9258.jpg', 'TJW0819.jpg', 'icon.png', 'profile.jpg']
+            exclude: ['TJW9258.jpg', 'TJW0819.jpg', 'icon.png', 'profile.jpg'],
+            batchSize: 12
         };
 
+        let allPhotos = [];
+        let currentIndex = 0;
         const container = document.getElementById('content');
         const modal = document.getElementById('modal');
         const modalImg = document.getElementById('modal-img');
+        const sentinel = document.getElementById('load-more-sentinel');
 
         function showPage(pageId) {
             document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
@@ -190,42 +197,59 @@
             window.scrollTo(0, 0);
         }
 
+        function renderBatch() {
+            const nextBatch = allPhotos.slice(currentIndex, currentIndex + config.batchSize);
+            
+            nextBatch.forEach(photo => {
+                const url = `https://cdn.jsdelivr.net/gh/${config.owner}/${config.repo}@main/${config.path}/${photo.name}`;
+                const item = document.createElement('div');
+                item.className = 'item';
+                const wrap = document.createElement('div');
+                wrap.className = 'media-wrap';
+                const img = new Image();
+                
+                img.src = url;
+                img.loading = "lazy";
+                img.onload = () => img.classList.add('visible');
+                
+                wrap.appendChild(img);
+                item.appendChild(wrap);
+                container.appendChild(item);
+
+                wrap.onclick = () => {
+                    modalImg.src = url;
+                    modal.classList.add('open');
+                };
+            });
+
+            currentIndex += config.batchSize;
+        }
+
         async function init() {
             try {
                 const res = await fetch(`https://api.github.com/repos/${config.owner}/${config.repo}/contents/${config.path}?t=${Date.now()}`);
                 const files = await res.json();
                 
-                let photos = files.filter(f => 
+                allPhotos = files.filter(f => 
                     f.type === 'file' && 
                     /\.(webp|jpg|jpeg|png)$/i.test(f.name) &&
                     !config.exclude.includes(f.name)
                 );
 
-                // SORTING: Fixed alphanumeric sort
-                photos.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }));
+                allPhotos.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }));
 
-                // RENDER: Create DOM elements in sorted order first
-                photos.forEach(photo => {
-                    const url = `https://cdn.jsdelivr.net/gh/${config.owner}/${config.repo}@main/${config.path}/${photo.name}`;
-                    const item = document.createElement('div');
-                    item.className = 'item';
-                    const wrap = document.createElement('div');
-                    wrap.className = 'media-wrap';
-                    const img = new Image();
-                    
-                    img.src = url;
-                    img.loading = "lazy";
-                    img.onload = () => img.classList.add('visible');
-                    
-                    wrap.appendChild(img);
-                    item.appendChild(wrap);
-                    container.appendChild(item);
+                // Initial load
+                renderBatch();
 
-                    wrap.onclick = () => {
-                        modalImg.src = url;
-                        modal.classList.add('open');
-                    };
-                });
+                // Setup Intersection Observer for Infinite Scroll
+                const observer = new IntersectionObserver((entries) => {
+                    if (entries[0].isIntersecting && currentIndex < allPhotos.length) {
+                        renderBatch();
+                    }
+                }, { rootMargin: '400px' });
+
+                observer.observe(sentinel);
+
             } catch (err) {
                 console.error("Failed to load gallery.");
             }
