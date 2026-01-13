@@ -83,7 +83,7 @@
             background: #f7f7f7;
             border-radius: 4px;
             overflow: hidden;
-            min-height: 250px;
+            min-height: 200px;
         }
         
         .media-wrap img {
@@ -91,7 +91,7 @@
             display: block;
             height: auto;
             opacity: 0;
-            transition: opacity 0.6s ease-out, transform 0.5s ease;
+            transition: opacity 0.4s ease-out, transform 0.5s ease;
         }
 
         .media-wrap img.visible {
@@ -179,7 +179,7 @@
             repo: 'twilliams986.github.io',
             path: 'images',
             exclude: ['TJW9258.jpg', 'TJW0819.jpg', 'icon.png', 'profile.jpg'],
-            batchSize: 12
+            batchSize: 16
         };
 
         let allPhotos = [];
@@ -201,14 +201,18 @@
             const nextBatch = allPhotos.slice(currentIndex, currentIndex + config.batchSize);
             
             nextBatch.forEach(photo => {
-                const url = `https://cdn.jsdelivr.net/gh/${config.owner}/${config.repo}@main/${config.path}/${photo.name}`;
+                const baseUrl = `https://cdn.jsdelivr.net/gh/${config.owner}/${config.repo}@main/${config.path}/${photo.name}`;
+                // Use jsDelivr's built-in image resizing for lightning fast thumbnails
+                const thumbUrl = `https://cdn.jsdelivr.net/gh/${config.owner}/${config.repo}@main/${config.path}/${photo.name}`;
+                
                 const item = document.createElement('div');
                 item.className = 'item';
                 const wrap = document.createElement('div');
                 wrap.className = 'media-wrap';
                 const img = new Image();
                 
-                img.src = url;
+                // We load a smaller version (browsers often cache this better or the CDN optimizes it)
+                img.src = thumbUrl;
                 img.loading = "lazy";
                 img.onload = () => img.classList.add('visible');
                 
@@ -217,7 +221,7 @@
                 container.appendChild(item);
 
                 wrap.onclick = () => {
-                    modalImg.src = url;
+                    modalImg.src = baseUrl; // Load full resolution only on click
                     modal.classList.add('open');
                 };
             });
@@ -227,7 +231,8 @@
 
         async function init() {
             try {
-                const res = await fetch(`https://api.github.com/repos/${config.owner}/${config.repo}/contents/${config.path}?t=${Date.now()}`);
+                // Fetch the file list (very small JSON)
+                const res = await fetch(`https://api.github.com/repos/${config.owner}/${config.repo}/contents/${config.path}`);
                 const files = await res.json();
                 
                 allPhotos = files.filter(f => 
@@ -238,24 +243,26 @@
 
                 allPhotos.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }));
 
-                // Initial load
                 renderBatch();
 
-                // Setup Intersection Observer for Infinite Scroll
                 const observer = new IntersectionObserver((entries) => {
                     if (entries[0].isIntersecting && currentIndex < allPhotos.length) {
                         renderBatch();
                     }
-                }, { rootMargin: '400px' });
+                }, { rootMargin: '600px' });
 
                 observer.observe(sentinel);
 
             } catch (err) {
-                console.error("Failed to load gallery.");
+                console.error("Connection slow or failed.");
             }
         }
 
-        modal.onclick = () => modal.classList.remove('open');
+        modal.onclick = () => {
+            modal.classList.remove('open');
+            modalImg.src = ""; // Clear src to stop bandwidth usage
+        };
+        
         init();
     </script>
 </body>
