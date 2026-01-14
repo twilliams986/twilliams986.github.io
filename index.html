@@ -33,17 +33,11 @@
             text-align: right;
             z-index: 100;
             display: flex;
-            flex-direction: column;
-            gap: 8px;
+            flex-direction: column; gap: 8px;
         }
         nav a {
-            text-decoration: none;
-            color: var(--fg);
-            font-size: 0.75rem;
-            text-transform: uppercase;
-            letter-spacing: 0.15em;
-            cursor: pointer;
-            transition: opacity 0.3s;
+            text-decoration: none; color: var(--fg); font-size: 0.75rem;
+            text-transform: uppercase; letter-spacing: 0.15em; cursor: pointer; transition: opacity 0.3s;
         }
         nav a:hover { opacity: 0.5; }
         nav a.active { font-weight: 600; text-decoration: underline; text-underline-offset: 4px; }
@@ -55,29 +49,29 @@
         header h1 {
             font-family: var(--font-serif);
             font-size: clamp(3rem, 12vw, 8.5rem);
-            font-weight: 400;
-            line-height: 0.85;
-            letter-spacing: -0.02em;
+            font-weight: 400; line-height: 0.85; letter-spacing: -0.02em;
         }
 
-        /* Masonry Grid Fix */
+        /* Balanced Grid Layout (Replaces Column-Count) */
         #content {
             padding: 0 6vw 5vh;
-            column-count: 2;
-            column-gap: 24px;
+            display: flex;
+            gap: 24px;
+            align-items: flex-start;
         }
-        
-        @media (min-width: 768px) { #content { column-count: 3; column-gap: 24px; } }
-        @media (min-width: 1200px) { #content { column-count: 4; column-gap: 32px; } }
+
+        .grid-column {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
 
         .item { 
-            break-inside: avoid;
-            margin-bottom: 24px;
             width: 100%;
-            display: block;
             opacity: 0;
-            transform: translateY(10px);
-            transition: opacity 0.6s ease, transform 0.6s ease;
+            transform: translateY(15px);
+            transition: opacity 0.8s ease, transform 0.8s ease;
         }
         
         .item.ready {
@@ -89,7 +83,7 @@
             cursor: zoom-in;
             position: relative;
             width: 100%;
-            background: #f4f4f4;
+            background: #f8f8f8;
             border-radius: 2px;
             overflow: hidden;
         }
@@ -127,9 +121,13 @@
         #modal.open { display: flex; }
         #modal img { max-width: 95vw; max-height: 95vh; object-fit: contain; }
 
-        #load-more-sentinel { height: 100px; width: 100%; }
+        #load-more-sentinel { height: 200px; width: 100%; }
 
-        @media (max-width: 1024px) { .info-layout { grid-template-columns: 1fr; } }
+        @media (max-width: 767px) {
+            #content { gap: 16px; }
+            .grid-column:last-child { display: flex; } /* Keep 2 cols on mobile for balance */
+            header h1 { font-size: 4rem; }
+        }
     </style>
 </head>
 <body>
@@ -142,7 +140,9 @@
 
     <section id="page-works" class="page active">
         <header><h1>Tyler<br>Williams</h1></header>
-        <main id="content"></main>
+        <main id="content">
+            <!-- Columns generated dynamically -->
+        </main>
         <div id="load-more-sentinel"></div>
     </section>
 
@@ -183,17 +183,30 @@
             imagesPath: 'images',
             thumbsPath: 'images/thumbnails',
             exclude: ['TJW9258.jpg', 'TJW0819.jpg', 'icon.png', 'profile.jpg'],
-            batchSize: 12
+            batchSize: 10
         };
 
         let allPhotos = [];
         let currentIndex = 0;
         let isRendering = false;
+        let columns = [];
         
         const container = document.getElementById('content');
         const modal = document.getElementById('modal');
         const modalImg = document.getElementById('modal-img');
         const sentinel = document.getElementById('load-more-sentinel');
+
+        function setupColumns() {
+            container.innerHTML = '';
+            const count = window.innerWidth >= 1200 ? 4 : (window.innerWidth >= 768 ? 3 : 2);
+            columns = [];
+            for (let i = 0; i < count; i++) {
+                const col = document.createElement('div');
+                col.className = 'grid-column';
+                container.appendChild(col);
+                columns.push(col);
+            }
+        }
 
         function showPage(pageId) {
             document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
@@ -203,45 +216,33 @@
             window.scrollTo(0, 0);
         }
 
-        // Logic to render strictly in order without jumps
         async function renderBatch() {
             if (isRendering || currentIndex >= allPhotos.length) return;
             isRendering = true;
 
             const nextBatch = allPhotos.slice(currentIndex, currentIndex + config.batchSize);
             
-            // Map over batch to pre-calculate dimensions
             const promises = nextBatch.map(photo => {
                 return new Promise((resolve) => {
                     const thumbUrl = `https://cdn.jsdelivr.net/gh/${config.owner}/${config.repo}@main/${config.thumbsPath}/${photo.name}`;
                     const fullUrl = `https://cdn.jsdelivr.net/gh/${config.owner}/${config.repo}@main/${config.imagesPath}/${photo.name}`;
-                    
                     const img = new Image();
                     img.src = thumbUrl;
-                    
-                    img.onload = () => {
-                        resolve({
-                            name: photo.name,
-                            thumbUrl,
-                            fullUrl,
-                            aspect: img.naturalWidth / img.naturalHeight
-                        });
-                    };
+                    img.onload = () => resolve({ name: photo.name, thumbUrl, fullUrl, aspect: img.naturalWidth / img.naturalHeight });
                     img.onerror = () => resolve(null);
                 });
             });
 
             const results = await Promise.all(promises);
 
-            results.forEach(data => {
+            results.forEach((data, index) => {
                 if (!data) return;
 
                 const item = document.createElement('div');
                 item.className = 'item';
-                
                 const wrap = document.createElement('div');
                 wrap.className = 'media-wrap';
-                wrap.style.aspectRatio = data.aspect; // LOCKS height immediately
+                wrap.style.aspectRatio = data.aspect;
                 
                 const displayImg = document.createElement('img');
                 displayImg.src = data.thumbUrl;
@@ -249,9 +250,11 @@
                 
                 wrap.appendChild(displayImg);
                 item.appendChild(wrap);
-                container.appendChild(item);
 
-                // Short timeout to allow browser to register the item in the DOM before animating in
+                // Balanced Distribution: Assign to columns sequentially (1, 2, 3, 4, 1, 2...)
+                const colIndex = (currentIndex + index) % columns.length;
+                columns[colIndex].appendChild(item);
+
                 setTimeout(() => item.classList.add('ready'), 50);
 
                 wrap.onclick = () => {
@@ -265,6 +268,7 @@
         }
 
         async function init() {
+            setupColumns();
             try {
                 const res = await fetch(`https://api.github.com/repos/${config.owner}/${config.repo}/contents/${config.imagesPath}`);
                 const files = await res.json();
@@ -275,7 +279,6 @@
                     !config.exclude.includes(f.name)
                 );
 
-                // NATURAL SORTING (1, 2, 10 instead of 1, 10, 2)
                 allPhotos.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' }));
 
                 await renderBatch();
@@ -284,14 +287,23 @@
                     if (entries[0].isIntersecting) {
                         renderBatch();
                     }
-                }, { rootMargin: '400px' });
+                }, { rootMargin: '800px' }); // Load very early to prevent buffering
 
                 observer.observe(sentinel);
 
             } catch (err) {
-                console.error("Gallery failed to initialize.");
+                console.error("Gallery failed");
             }
         }
+
+        window.addEventListener('resize', () => {
+            const currentCount = columns.length;
+            const newCount = window.innerWidth >= 1200 ? 4 : (window.innerWidth >= 768 ? 3 : 2);
+            if (currentCount !== newCount) {
+                currentIndex = 0;
+                init();
+            }
+        });
 
         modal.onclick = () => {
             modal.classList.remove('open');
